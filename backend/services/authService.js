@@ -6,14 +6,17 @@ exports.login = async (username, password) => {
   if (!username || !password)
     throw new Error("username and password is not empty");
 
-  // Tìm user theo username (hoặc email, tùy schema của bạn)
-  const user = await prisma.user.findUnique({
+  // Tìm user theo username HOẶC email
+  const user = await prisma.user.findFirst({
     where: {
-      username: username, // hoặc email: username nếu bạn dùng email để login
+      OR: [
+        { username: username },
+        { email: username } // username param may contain email
+      ]
     },
     include: {
-      addresses: true, // ví dụ nếu bạn muốn lấy luôn địa chỉ liên quan
-      role: true,    // ví dụ nếu bạn có bảng roles liên quan
+      addresses: true,
+      role: true,
     },
   });
 

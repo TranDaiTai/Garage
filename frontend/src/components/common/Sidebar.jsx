@@ -18,42 +18,40 @@ import {
   Phone,
   ChevronRight,
 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useAuth } from "@/context/AuthContext";
 const UserRole = {
   USER: "USER",
   STAFF: "STAFF",
   ADMIN: "ADMIN",
 };
 
-const Sidebar = ({
-  user,
-  role,
-  activeTab,
-  setActiveTab,
-  isOpen,
-  setIsOpen,
-}) => {
+const Sidebar = ({ isOpen, setIsOpen }) => {
+  const [activeTab, setActiveTab] = useState("profile");
+  const { user } = useAuth();
+  const role = user?.role.name ? user.role?.name : null;
   const userNav = [
-    { id: "profile", label: "Thông tin cá nhân", icon: User },
-    { id: "orders", label: "Lịch sử dịch vụ", icon: ShoppingBag },
-    { id: "reviews", label: "Đánh giá của tôi", icon: Star },
-    { id: "billing", label: "Thanh toán & Địa chỉ", icon: CreditCard },
-    { id: "settings", label: "Cài đặt tài khoản", icon: Settings },
+    { id: "profile", label: "Trung tâm điều khiển", icon: LayoutDashboard },
+    { id: "orders", label: "Đơn mua của tôi", icon: ShoppingBag },
+    { id: "reviews", label: "Đánh giá sản phẩm", icon: Star },
+    { id: "billing", label: "Địa chỉ & Thanh toán", icon: CreditCard },
+    { id: "settings", label: "Thiết lập tài khoản", icon: Settings },
   ];
 
   const staffNav = [
-    { id: "profile", label: "Hồ sơ nhân viên", icon: User },
-    { id: "tasks", label: "Công việc phân công", icon: ClipboardList },
-    { id: "schedule", label: "Lịch làm việc", icon: Calendar },
-    { id: "status", label: "Trạng thái xử lý", icon: Wrench },
-    { id: "notifications", label: "Thông báo nội bộ", icon: Bell },
+    { id: "profile", label: "Bảng tin nhân viên", icon: LayoutDashboard },
+    { id: "tasks", label: "Đơn hàng cần xử lý", icon: ClipboardList },
+    { id: "schedule", label: "Lịch trực cửa hàng", icon: Calendar },
+    { id: "status", label: "Theo dõi kho vận", icon: Package },
+    { id: "notifications", label: "Thông báo hệ thống", icon: Bell },
   ];
 
   const adminNav = [
-    { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { id: "users", label: "Quản lý người dùng", icon: Users },
-    { id: "services", label: "Sản phẩm & Dịch vụ", icon: Package },
-    { id: "analytics", label: "Báo cáo doanh thu", icon: BarChart3 },
-    { id: "system", label: "Cấu hình hệ thống", icon: Shield },
+    { id: "dashboard", label: "Tổng quan kinh doanh", icon: BarChart3 },
+    { id: "users", label: "Quản lý khách hàng", icon: Users },
+    { id: "products", label: "Quản trị sản phẩm", icon: Package },
+    { id: "orders", label: "Quản lý đơn hàng", icon: ClipboardList },
+    { id: "system", label: "Cấu hình EcoMarket", icon: Shield },
   ];
 
   const getNavItems = () => {
@@ -67,8 +65,16 @@ const Sidebar = ({
     }
   };
 
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (role === UserRole.ADMIN) setActiveTab("dashboard");
+    else if (role === UserRole.STAFF) setActiveTab("tasks");
+    else setActiveTab("profile");
+  }, [role]);
+
   const navItems = getNavItems();
 
+  if (!user) return null;
   return (
     <>
       <aside
@@ -86,20 +92,20 @@ const Sidebar = ({
         >
           <ChevronLeft className="cursor-pointer" />
         </button>
-
+|
         <div className="h-full flex flex-col ">
           <div className="p-4 border-b border-border flex items-center gap-2">
             <img
-              src={user.avatar || "/placeholder"}
+              src={user.avatarUrl || "/placeholder"}
               alt="Avatar"
               className="w-10 h-10 rounded-full object-cover"
             />
             <div className="flex flex-col">
               <span className="text-l font-bold text-foreground tracking-tight">
-                {user.name}
+                {user.fullName}
               </span>
               <span className="text-sm  text-muted-foreground tracking-tight">
-                {user.role.toLowerCase()}
+                {role.toLowerCase()}
               </span>
             </div>
             <button className="relative p-2 text-muted-foreground hover:bg-muted hover:text-foreground rounded-full transition-colors">
@@ -120,14 +126,14 @@ const Sidebar = ({
                   w-full flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-colors
                   ${
                     isActive
-                      ? "bg-primary-50 text-primary-700"
-                      : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                      ? "bg-secondary text-primary border-l-4 border-accent"
+                      : "text-muted-foreground hover:bg-secondary/50 hover:text-primary"
                   }
                 `}
                 >
                   <Icon
                     className={`mr-3 h-5 w-5 ${
-                      isActive ? "text-primary-600" : "text-gray-400"
+                      isActive ? "text-primary" : "text-gray-400"
                     }`}
                   />
                   {item.label}
@@ -167,7 +173,7 @@ const Sidebar = ({
           <div className="h-full flex flex-col">
             <div className="p-1 border-b border-border flex items-center gap-3">
               <img
-                src={user.avatar || "/placeholder"}
+                src={user.avatarUrl || "/placeholder"}
                 alt="Avatar"
                 className="w-10 h-10 rounded-full object-cover"
               />
@@ -185,14 +191,14 @@ const Sidebar = ({
                   w-full flex items-center justify-center px-1 py-2.5 text-sm font-medium rounded-lg transition-colors
                   ${
                     isActive
-                      ? "bg-primary-50 text-primary-700"
-                      : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                      ? "bg-secondary text-primary"
+                      : "text-muted-foreground hover:bg-secondary/50 hover:text-primary"
                   }
                 `}
                   >
                     <Icon
-                      className={`mr-3 h-5 w-5 ${
-                        isActive ? "text-primary-600" : "text-gray-400"
+                      className={`h-5 w-5 ${
+                        isActive ? "text-primary" : "text-gray-400"
                       }`}
                     />
                   </button>
@@ -201,7 +207,7 @@ const Sidebar = ({
             </nav>
 
             <div className="p-4 border-t border-border">
-              <Phone className="mb-2" />
+              <Phone size={20} className="mx-auto text-muted-foreground" />
             </div>
           </div>
         </aside>

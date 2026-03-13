@@ -19,8 +19,8 @@ export  function UserProfileDesktop({ user, isOpen, onToggle, onLogout }) {
         onClick={onToggle}
         className="navbar__profile-trigger"
       >
-        <UserAvatar name={user.name} />
-        <span className="navbar__profile-name">{user.name}</span>
+        <UserAvatar name={user.fullName} />
+        <span className="navbar__profile-name">{user.fullName}</span>
         <ChevronDown className={`navbar__profile-chevron ${isOpen ? "open" : ""}`} />
       </button>
 

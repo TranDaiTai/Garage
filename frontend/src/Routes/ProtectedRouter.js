@@ -1,9 +1,9 @@
 import { redirect } from 'react-router-dom';
-import { authApi } from '@/api/auth/auth.services';
+import axiosClient from '@/api/axiosClient';
 
 export async function protectedLoader({ request }) {
   try {
-    const res = await authApi.verify(); // ✅ await để lấy dữ liệu
+    const res = await axiosClient.get('/auth/verify'); 
     const user = res.data; // tùy backend trả gì
 
     if (!user) {

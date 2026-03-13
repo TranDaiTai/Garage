@@ -1,223 +1,234 @@
-"use client"
-
-
-import { useState } from "react"
-import {Link, useNavigate} from "react-router-dom"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import api from "@/api/api"
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import axiosClient from "@/api/axiosClient";
+import { User, Mail, Lock, UserPlus, ArrowLeft, CheckCircle2 } from "lucide-react";
 
 export default function RegisterPage() {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [confirmPassword, setConfirmPassword] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState("")
-  const navigate = useNavigate()
-   
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
+  const navigate = useNavigate();
 
   const handleSignup = async (e) => {
-    e.preventDefault()
-    setIsLoading(true)
-    setError("")
+    e.preventDefault();
+    setIsLoading(true);
+    setError("");
 
     try {
-      // 1. Kiểm tra mật khẩu trùng
       if (password !== confirmPassword) {
-        setError("Mật khẩu xác nhận không khớp!")
-        return
+        setError("Mật khẩu xác nhận không khớp!");
+        setIsLoading(false);
+        return;
       }
 
-      // 2. Kiểm tra độ dài mật khẩu
       if (password.length < 8) {
-        setError("Mật khẩu phải ít nhất 8 ký tự")
-        return
+        setError("Mật khẩu phải từ 8 ký tự trở lên");
+        setIsLoading(false);
+        return;
       }
 
-      // 3. Gọi API đăng ký (dùng route bạn đã có: POST /api/users)
-      const response = await api.post("api/users", {
+      const response = await axiosClient.post("/users", {
+        username,
         email,
         password,
-        name: email.split("@")[0] // tạm lấy phần trước @ làm tên (có thể thêm input tên sau)
-      })
+      });
 
-      // console.log("Đăng ký thành công!", response.data)
-
-      // Thành công → chuyển về trang login
-      // alert("Đăng ký thành công! Vui lòng đăng nhập")
-      navigate("/login") // hoặc "/" nếu trang login là root
-
+      if (response.success) {
+        setSuccess(true);
+        setTimeout(() => {
+          navigate("/login");
+        }, 3000);
+      }
     } catch (err) {
-      const msg = err.response?.data?.message 
-        || err.message 
-        || "Đăng ký thất bại, vui lòng thử lại"
-      setError(msg)
-      console.error(err)
+      const msg = err.response?.data?.message || "Đăng ký thất bại, vui lòng thử lại";
+      setError(msg);
+      console.error(err);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
+  };
+
+  if (success) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="max-w-md w-full glass-effect rounded-[3rem] shadow-premium p-12 text-center border border-white/40 flex flex-col items-center animate-slideUp">
+          <div className="w-24 h-24 bg-green-50 text-green-500 rounded-full flex items-center justify-center mb-8 shadow-inner animate-bounce">
+            <CheckCircle2 className="w-12 h-12" />
+          </div>
+          <h1 className="text-4xl font-black text-primary mb-4 tracking-tight uppercase leading-tight">CHÀO MỪNG TÂN THÀNH VIÊN!</h1>
+          <p className="text-muted-foreground mb-12 font-medium italic group-hover:scale-105 transition-transform">
+            "Hành trình mua sắm tuyệt vời của bạn tại EcoMarket chính thức bắt đầu từ đây."
+          </p>
+          <div className="w-full bg-secondary h-2 rounded-full overflow-hidden mb-4 shadow-inner">
+             <div className="bg-accent h-full animate-[progress_3s_linear]"></div>
+          </div>
+          <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40">Đang chuẩn bị không gian riêng cho bạn (3s)...</p>
+        </div>
+      </div>
+    );
   }
-  
 
   return (
-    <div
-      className="min-h-screen flex items-center justify-center p-4"
-      style={{
-        backgroundImage: "url('/gradient-background.jpg')",
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat",
-      }}
-    >
+    <div className="min-h-screen bg-background flex flex-col justify-center py-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+      
+      {/* Background decoration */}
+      <div className="absolute top-0 left-0 -ml-20 -mt-20 w-96 h-96 rounded-full bg-primary/5 blur-[120px] animate-pulse"></div>
+      <div className="absolute bottom-0 right-0 -mr-20 -mb-20 w-[30rem] h-[30rem] rounded-full bg-accent/5 blur-[150px] animate-pulse delay-700"></div>
 
-      <Card
-        className="max-w-md shadow-2xl relative z-10 opacity-100 w-[126%] mx-[0] border-transparent"
-        style={{
-          backdropFilter: "blur(40px) saturate(250%)",
-          border: "1px solid rgba(255, 255, 255, 0.4)",
-          boxShadow:
-            "0 32px 80px rgba(0, 0, 0, 0.3), 0 16px 64px rgba(255, 255, 255, 0.2), inset 0 3px 0 rgba(255, 255, 255, 0.6), inset 0 -1px 0 rgba(255, 255, 255, 0.3)",
-        }}
-      >
-        <CardHeader className="text-center space-y-2">
-          <CardTitle className="text-3xl font-bold font-sans text-card-foreground">Create Account</CardTitle>
-          <CardDescription className="text-card-foreground/70 font-sans">Sign up to get started</CardDescription>
-        </CardHeader>
+      <div className="sm:mx-auto sm:w-full sm:max-w-md z-10 animate-slideUp">
+        <Link to="/" className="flex items-center justify-center gap-3 mb-10 group w-fit mx-auto transition-all">
+            <div className="w-12 h-12 bg-primary rounded-2xl flex items-center justify-center text-white font-black text-2xl shadow-premium group-hover:bg-accent transition-colors">E</div>
+            <span className="text-3xl font-black text-primary tracking-tighter uppercase italic">EcoMarket</span>
+        </Link>
+        <div className="space-y-3 text-center">
+          <h2 className="text-4xl font-black text-primary tracking-tight uppercase leading-tight">
+            GIA NHẬP ECO-HUB
+          </h2>
+          <div className="h-1.5 w-12 bg-accent mx-auto rounded-full"></div>
+          <p className="text-muted-foreground font-medium italic pt-2">
+            Vì bạn xứng đáng với những trải nghiệm tốt nhất.
+          </p>
+        </div>
+      </div>
 
-        <CardContent className="space-y-6">
-          <form onSubmit={handleSignup} className="space-y-4">
-            {error && (
-              <div className="p-3 bg-destructive/20 border border-destructive/50 rounded-lg text-sm text-destructive font-sans">
-                {error}
+      <div className="mt-12 sm:mx-auto sm:w-full sm:max-w-md z-10 animate-slideUp delay-100">
+        <div className="glass-effect p-8 md:p-12 rounded-[2.5rem] border border-white/40 shadow-premium relative">
+          
+          {error && (
+            <div className="mb-8 p-5 bg-red-500/10 text-red-600 font-bold rounded-2xl border border-red-500/20 flex items-start gap-4 text-xs tracking-wide uppercase animate-shake">
+                <div className="mt-0.5 text-lg">⚠️</div>
+                <div className="flex-1 leading-relaxed">{error}</div>
+            </div>
+          )}
+
+          <form className="space-y-6" onSubmit={handleSignup}>
+            <div className="space-y-2">
+              <label htmlFor="username" className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] ml-2">
+                Danh xưng hội viên
+              </label>
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-6 flex items-center pointer-events-none text-muted-foreground/40 group-focus-within:text-accent transition-colors">
+                  <User className="h-5 w-5" />
+                </div>
+                <input
+                  id="username"
+                  name="username"
+                  type="text"
+                  required
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  className="w-full pl-14 pr-6 py-5 bg-secondary/30 border-none rounded-2xl font-bold text-primary placeholder:text-muted-foreground/30 focus:ring-2 focus:ring-accent transition-all outline-none"
+                  placeholder="VD: eco_warrior_01"
+                />
               </div>
-            )}
-
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm font-medium text-card-foreground font-sans">
-                Email Address
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="Enter your email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="border-white/40 bg-white/10 placeholder:text-card-foreground/50 text-card-foreground py-3 focus:ring-2 focus:border-orange-500 focus:bg-white/15 transition-all duration-200"
-                style={{ "--tw-ring-color": "var(--accent)" } }
-                required
-              />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-sm font-medium text-card-foreground font-sans">
-                Password
-              </Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="Enter your password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="border-white/40 bg-white/10 placeholder:text-card-foreground/50 text-card-foreground py-3 focus:ring-2 focus:border-orange-500 focus:bg-white/15 transition-all duration-200"
-                style={{ "--tw-ring-color": "var(--accent)" } }
-                required
-              />
-              <p className="text-xs text-card-foreground/50 font-sans">At least 8 characters</p>
+              <label htmlFor="email" className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] ml-2">
+                Hộp thư điện tử
+              </label>
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-6 flex items-center pointer-events-none text-muted-foreground/40 group-focus-within:text-accent transition-colors">
+                  <Mail className="h-5 w-5" />
+                </div>
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full pl-14 pr-6 py-5 bg-secondary/30 border-none rounded-2xl font-bold text-primary placeholder:text-muted-foreground/30 focus:ring-2 focus:ring-accent transition-all outline-none"
+                  placeholder="you@example.com"
+                />
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="confirm-password" className="text-sm font-medium text-card-foreground font-sans">
-                Confirm Password
-              </Label>
-              <Input
-                id="confirm-password"
-                type="password"
-                placeholder="Confirm your password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="border-white/40 bg-white/10 placeholder:text-card-foreground/50 text-card-foreground py-3 focus:ring-2 focus:border-orange-500 focus:bg-white/15 transition-all duration-200"
-                style={{ "--tw-ring-color": "var(--accent)" }}
-                required
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+               <div className="space-y-2">
+                 <label htmlFor="password" sex className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] ml-2">
+                   Mật mã
+                 </label>
+                 <div className="relative group">
+                   <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none text-muted-foreground/40 group-focus-within:text-accent transition-colors">
+                     <Lock className="h-4 w-4" />
+                   </div>
+                   <input
+                     id="password"
+                     name="password"
+                     type="password"
+                     required
+                     value={password}
+                     onChange={(e) => setPassword(e.target.value)}
+                     className="w-full pl-12 pr-4 py-4 bg-secondary/30 border-none rounded-2xl font-bold text-primary placeholder:text-muted-foreground/30 focus:ring-2 focus:ring-accent transition-all outline-none text-sm"
+                     placeholder="••••••••"
+                   />
+                 </div>
+               </div>
+
+               <div className="space-y-2">
+                 <label htmlFor="confirmPassword" sex className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] ml-2">
+                   Xác thực
+                 </label>
+                 <div className="relative group">
+                   <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none text-muted-foreground/40 group-focus-within:text-accent transition-colors">
+                     <CheckCircle2 className="h-4 w-4" />
+                   </div>
+                   <input
+                     id="confirmPassword"
+                     name="confirmPassword"
+                     type="password"
+                     required
+                     value={confirmPassword}
+                     onChange={(e) => setConfirmPassword(e.target.value)}
+                     className="w-full pl-12 pr-4 py-4 bg-secondary/30 border-none rounded-2xl font-bold text-primary placeholder:text-muted-foreground/30 focus:ring-2 focus:ring-accent transition-all outline-none text-sm"
+                     placeholder="••••••••"
+                   />
+                 </div>
+               </div>
             </div>
 
-            <Button
-              type="submit"
-              className="w-full ripple-effect hover-lift font-sans font-bold py-5 transition-all duration-300"
-              style={{ backgroundColor: "var(--accent)", color: "white" }}
-              disabled={isLoading}
-            >
-              {isLoading ? "Creating Account..." : "Sign Up"}
-            </Button>
+            <div className="pt-6">
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full btn-primary py-5 font-black uppercase tracking-[0.2em] active:scale-95 transition-all shadow-xl disabled:opacity-50 flex items-center justify-center gap-3 group"
+              >
+                {isLoading ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Đang thiết lập...
+                  </>
+                ) : (
+                  <>
+                    Xác nhận gia nhập <UserPlus className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                  </>
+                )}
+              </button>
+            </div>
           </form>
 
-          <div className="relative">
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="px-2 text-card-foreground/60 font-sans">Or continue with</span>
-            </div>
+          <div className="mt-10 text-center">
+             <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
+                Bạn đã là một phần của Eco-Hub? {" "}
+                <Link to="/login" className="text-accent hover:underline decoration-2 underline-offset-4">
+                  Đăng nhập tại đây
+                </Link>
+             </p>
           </div>
-
-          <div className="space-y-3">
-            <Button
-              variant="outline"
-              onClick={() => handleSocialSignup("Google")}
-              className="w-full glass-effect border-white/30 hover-lift ripple-effect text-card-foreground hover:bg-white/20 font-sans transition-all duration-300"
-            >
-              <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
-                <path
-                  fill="#4285F4"
-                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                />
-                <path
-                  fill="#34A853"
-                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                />
-                <path
-                  fill="#FBBC05"
-                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                />
-                <path
-                  fill="#EA4335"
-                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 2.43-4.53 6.16-4.53z"
-                />
-              </svg>
-              Continue with Google
-            </Button>
-
-            <Button
-              variant="outline"
-              onClick={() => handleSocialSignup("Apple")}
-              className="w-full glass-effect border-white/30 hover-lift ripple-effect text-card-foreground hover:bg-white/20 font-sans transition-all duration-300"
-            >
-              <svg className="w-5 h-5 mr-2" viewBox="0 0 384 512" fill="currentColor">
-                <path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z" />
-              </svg>
-              Continue with Apple
-            </Button>
-
-            <Button
-              variant="outline"
-              onClick={() => handleSocialSignup("Meta")}
-              className="w-full glass-effect border-white/30 hover-lift ripple-effect text-card-foreground hover:bg-white/20 font-sans transition-all duration-300"
-            >
-              <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="#1877F2">
-                <path d="M9.101 23.691v-7.98H6.627v-3.667h2.474v-1.58c0-4.085 1.848-5.978 5.858-5.978.401 0 .955.042 1.468.103a8.68 8.68 0 0 1 1.141.195v3.325a8.623 8.623 0 0 0-.653-.036 26.805 26.805 0 0 0-.733-.009c-.707 0-1.259.096-1.675.309a1.686 1.686 0 0 0-.679.622c-.258.42-.374.995-.374 1.752v1.297h3.919l-.386 2.103-.287 1.564h-3.246v8.245C19.396 23.238 24 18.179 24 12.044c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.628 3.874 10.35 9.101 11.647Z" />
-              </svg>
-              Continue with Meta
-            </Button>
-          </div>
-
-          <div className="text-center text-sm text-card-foreground/70 font-sans">
-            Already have an account?{" "}
-            <Link href="/" className="text-card-foreground hover:underline font-semibold">
-              Sign in
-            </Link>
-          </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
+      
+      <Link to="/" className="mt-10 mx-auto flex items-center gap-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground/40 hover:text-accent transition-all group animate-fadeIn">
+         <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> Về trang chủ
+      </Link>
     </div>
-  )
+  );
 }
+
 

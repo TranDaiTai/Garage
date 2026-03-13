@@ -1,20 +1,22 @@
 // src/Routes/AppRoutes.jsx
 
-import { BrowserRouter, createBrowserRouter, Route } from "react-router-dom";
+import { createBrowserRouter } from "react-router-dom";
 import DefaultLayout, { DefaultLayoutWithoutFooter } from "@/components/layout/DefaultLayout";
 import Home from "@/pages/Home";
-import Booking from "@/pages/Booking";
-import Services from "@/pages/services";
-import ServiceDetail from "@/pages/services/[id]";
-import ProductPage from "@/pages/product/product";
-import ProductDetailPage from "@/pages/product/[id]";
+import ShopPage from "@/pages/product/product"; // Sẽ đổi tên sau
+import ProductDetailPage from "@/pages/product/[slug]";
 import CartPage from "@/pages/Cart";
+import CheckoutPage from "@/pages/Checkout"; 
 import NotFound from "@/pages/Notfound";
 import LoginPage from "@/pages/auth/login/Login";
 import { protectedLoader } from "./ProtectedRouter";
 import RegisterPage from "@/pages/auth/register";
 import ForgotPasswordPage from "@/pages/auth/forgot-password";
 import ProfilePage from "@/pages/auth/profile/profile";
+
+
+import PromotionsPage from "@/pages/promotions";
+import AboutPage from "@/pages/about";
 
 
 export const router = createBrowserRouter([
@@ -24,37 +26,25 @@ export const router = createBrowserRouter([
     children: [
       // Public routes
       { index: true, element: <Home /> },
-      { path: "services", element: <Services /> },
-      { path: "services/:id", element: <ServiceDetail /> },
-      { path: "product", element: <ProductPage /> },
-      { path: "product/:id", element: <ProductDetailPage /> },
+      { path: "shop", element: <ShopPage /> },
+      { path: "product/:slug", element: <ProductDetailPage /> },
       { path: "login", element: <LoginPage /> },
       { path: "register", element: <RegisterPage /> },
       { path: "forgot-password", element: <ForgotPasswordPage /> },
+      { path: "promotions", element: <PromotionsPage /> },
+      { path: "about", element: <AboutPage /> },
+      { path: "cart", element: <CartPage /> },
+      { path: "profile", element: <ProfilePage /> },
 
-      // Protected routes (sẽ thêm loader/auth sau)
+      // Protected routes (Yêu cầu đăng nhập)
       {
-        loader: protectedLoader, // Tất cả children bên dưới đều được bảo vệ
+        loader: protectedLoader,
         children: [
-          { path: "booking", element: <Booking /> },
-          { path: "cart", element: <CartPage /> },
-          // thêm bao nhiêu trang protected cũng được
+           { path: "checkout", element: <CheckoutPage /> },
         ],
       },
-      // 404 phải để cuối cùng
+      // 404
       { path: "*", element: <NotFound /> },
     ],
   },
-  {
-    element: <DefaultLayoutWithoutFooter />,
-    children: [
-      {
-        index: true, 
-        element: <ProfilePage />,
-      }
-    ],
-    path: "profile/*",
-
-    
-  }
 ]);

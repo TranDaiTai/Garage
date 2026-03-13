@@ -8,7 +8,7 @@ const UserRole = {
 
 const Header = ({ user, toggleSidebar, onSwitchRole }) => {
   return (
-    <header className="h-16 bg-white dark:bg-card border-b border-border flex items-center justify-between px-4 lg:px-8 sticky top-0 z-20 shadow-sm   ">
+    <header className="h-16 bg-white dark:bg-card border-b border-border flex items-center justify-between p-4 lg:px-8 sticky top-0 z-20 shadow-sm   ">
       <div className="flex items-center gap-4">
         <button
           onClick={toggleSidebar}

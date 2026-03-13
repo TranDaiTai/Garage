@@ -276,6 +276,7 @@ export function DecorationThemeSwitcher() {
 
   useEffect(() => {
     const stored = localStorage.getItem("decorationTheme") || getCurrentSeasonTheme()
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setActiveTheme(stored)
   }, [])
 

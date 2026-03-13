@@ -138,15 +138,26 @@ exports.verify = (rep, res) => {
       success: false,
       message: "chua dang nhap",
     });
-  jwt.verify(accessToken, process.env.JWT_SECRET, (err, payload) => {
+  jwt.verify(accessToken, process.env.JWT_SECRET, async (err, payload) => {
     if (err)
       return res.status(400).json({
         success: false,
         message: " invalid token",
       });
+    
+    // Tìm thông tin user đầy đủ để trả về cho frontend
+    const user = await prisma.user.findUnique({
+      where: { id: payload.userId },
+      include: { role: true }
+    });
+
+    if(!user) return res.status(404).json({ success: false, message: "User not found" });
+
+    const { passwordHash: _, ...userWithoutPassword } = user;
+    
     return res.json({
       success: true,
-      data: payload.userId,
+      data: { user: userWithoutPassword },
     });
   });
 };

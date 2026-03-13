@@ -1,10 +1,11 @@
+/* eslint-disable no-unused-vars */
+/* eslint-disable react-hooks/set-state-in-effect */
 import { useEffect, useState } from "react";
 import { ShoppingCart, Search } from "lucide-react";
 import { FilterSidebar } from "../common/FilterSidebar";
 import { SortBar } from "../common/SortBar";
 import ProductCard from "@/components/common/ProductCard";
 import Pagination from "../common/Pagination";
-import './index.css'
 export default function ShopContainer({
   products = [],
   pagination = { totalPages: 1, currentPage: 1 },
@@ -86,8 +87,9 @@ export default function ShopContainer({
   // }
 
   return (
-    <div className="products__container">
-      <div className="flex gap-6">
+    <div className="w-full">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-12">
+        {/* Sidebar */}
         <FilterSidebar
           selectedCategories={filters.categories}
           selectedPriceRanges={filters.priceRanges}
@@ -102,7 +104,8 @@ export default function ShopContainer({
           RATINGS={RATINGS}
         />
 
-        <div className="flex-1">
+        {/* Main Content */}
+        <div className="lg:col-span-3 space-y-8">
           <SortBar
             searchInput={searchInput}
             onSearchInputChange={setSearchInput}
@@ -114,31 +117,48 @@ export default function ShopContainer({
           />
 
           {loading ? (
-            <div className="text-center py-10">Đang tải sản phẩm...</div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8">
+               {[1,2,3,4,5,6].map(i => (
+                  <div key={i} className="animate-pulse bg-white rounded-3xl h-96"></div>
+               ))}
+            </div>
           ) : products.length > 0 ? (
             <>
-              <div className="grid xl:grid-cols-4 lg:grid-cols-3 md:grid-cols-2 sm:grid-cols-2 gap-6 mb-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8 animate-fadeIn">
                 {products.map((product) => (
                   <ProductCard key={product.id} product={product} />
                 ))}
               </div>
 
-              <Pagination
-                currentPage={pagination.currentPage || 1}
-                totalPages={pagination.totalPages || 1}
-                onPageChange={handlePageChange}
-              />
+              <div className="pt-12">
+                <Pagination
+                  currentPage={pagination.currentPage || 1}
+                  totalPages={pagination.totalPages || 1}
+                  onPageChange={handlePageChange}
+                />
+              </div>
             </>
           ) : (
-            <div className="flex flex-col items-center justify-center py-20">
-              <ShoppingCart className="w-20 h-20 text-muted-foreground mb-4" />
-              <p className="text-xl text-foreground font-medium">
-                Không tìm thấy sản phẩm phù hợp
+            <div className="flex flex-col items-center justify-center py-32 premium-card bg-white text-center">
+              <div className="bg-secondary p-8 rounded-full mb-6">
+                <ShoppingCart className="w-16 h-16 text-primary/20" />
+              </div>
+              <h3 className="text-2xl font-black text-primary mb-2">
+                Không tìm thấy sản phẩm
+              </h3>
+              <p className="text-muted-foreground font-medium max-w-sm">
+                Rất tiếc, chúng tôi không tìm thấy kết quả phù hợp với bộ lọc hiện tại của bạn.
               </p>
+              <button 
+                onClick={() => window.location.reload()}
+                className="mt-8 btn-primary px-10"
+              >
+                Tải lại trang
+              </button>
             </div>
           )}
         </div>
       </div>
     </div>
   );
-}
+}

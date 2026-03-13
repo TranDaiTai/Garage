@@ -29,18 +29,18 @@ import { Button } from "../ui/button"
 
 /* --- MOCK DATA --- */
 const mockOrders = [
-  { id: "#ORD-2025-001", service: "Bảo dưỡng định kỳ cấp 1", date: "24/12/2025", status: "Completed", total: 1500000 },
-  { id: "#ORD-2025-002", service: "Thay nhớt & Lọc gió", date: "20/12/2025", status: "Completed", total: 850000 },
-  { id: "#ORD-2025-003", service: "Sơn phủ gầm", date: "15/12/2025", status: "In Progress", total: 3200000 },
-   { id: "#ORD-2025-001", service: "Bảo dưỡng định kỳ cấp 1", date: "24/12/2025", status: "Completed", total: 1500000 },
-  { id: "#ORD-2025-002", service: "Thay nhớt & Lọc gió", date: "20/12/2025", status: "Completed", total: 850000 },
-  { id: "#ORD-2025-003", service: "Sơn phủ gầm", date: "15/12/2025", status: "In Progress", total: 3200000 },
+  { id: "#ECO-2025-001", service: "Laptop Gaming ASUS ROG Strix", date: "24/12/2025", status: "Completed", total: 35000000 },
+  { id: "#ECO-2025-002", service: "iPhone 15 Pro Max 256GB", date: "20/12/2025", status: "Completed", total: 28500000 },
+  { id: "#ECO-2025-003", service: "Bàn phím cơ Custom KBD75", date: "15/12/2025", status: "In Progress", total: 4200000 },
+   { id: "#ECO-2025-004", service: "Màn hình Dell UltraSharp 27", date: "24/12/2025", status: "Completed", total: 11500000 },
+  { id: "#ECO-2025-005", service: "Chuột Logitech G Pro X", date: "20/12/2025", status: "Completed", total: 2850000 },
+  { id: "#ECO-2025-006", service: "Tai nghe Sony WH-1000XM5", date: "15/12/2025", status: "In Progress", total: 8200000 },
 ]
 
 const mockTasks = [
   {
     id: "T-101",
-    title: "Kiểm tra hệ thống phanh - Mazda CX5",
+    title: "Xác nhận đơn hàng #ECO-2025-099",
     customer: "Nguyễn Văn A",
     status: "In Progress",
     priority: "High",
@@ -48,7 +48,7 @@ const mockTasks = [
   },
   {
     id: "T-102",
-    title: "Thay lốp - Ford Ranger",
+    title: "Chuẩn bị hàng: Laptop ASUS",
     customer: "Trần Thị B",
     status: "Todo",
     priority: "Medium",
@@ -56,7 +56,7 @@ const mockTasks = [
   },
   {
     id: "T-103",
-    title: "Rửa xe chi tiết",
+    title: "Giao hàng cho đơn vị vận chuyển",
     customer: "Lê Văn C",
     status: "Done",
     priority: "Low",
@@ -75,37 +75,11 @@ const chartData = [
 ]
 
 /* --- USER VIEW --- */
-export const UserDashboard = ({ user }) => {
+export const UserDashboard = () => {
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Profile Header Card */}
-      <Card className="p-6">
-        <div className="flex flex-col md:flex-row items-center md:items-start space-y-4 md:space-y-0 md:space-x-6">
-          <div className="relative">
-            <img 
-              src={user.avatar} 
-              alt={user.name} 
-              className="w-24 h-24 rounded-full object-cover border-4 border-primary-50"
-            />
-            <button className="absolute bottom-0 right-0 bg-white p-1.5 rounded-full shadow border border-gray-200 text-gray-600 hover:text-primary-600">
-                <Camera size={16} />
-            </button>
-          </div>
-          <div className="flex-1 text-center md:text-left">
-            <h2 className="text-2xl font-bold text-gray-900">{user.name}</h2>
-            <p className="text-gray-500 mb-4">{user.email} • Thành viên từ 2023</p>
-            <div className="flex flex-wrap justify-center md:justify-start gap-3">
-              <div className="flex items-center text-sm text-gray-600 bg-gray-50 px-3 py-1 rounded-lg">
-                <Phone size={16} className="mr-2" /> {user.phone}
-              </div>
-              <div className="flex items-center text-sm text-gray-600 bg-gray-50 px-3 py-1 rounded-lg">
-                <MapPin size={16} className="mr-2" /> {user.address || 'Chưa cập nhật địa chỉ'}
-              </div>
-            </div>
-          </div>
-          <Button variant="outline"><Edit3 size={16} className="mr-2" /> Chỉnh sửa</Button>
-        </div>
-      </Card>
+      
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Recent Orders */}
@@ -174,7 +148,7 @@ export const UserDashboard = ({ user }) => {
 };
 
 /* --- STAFF VIEW --- */
-export const StaffDashboard = ({ user }) => {
+export const StaffDashboard = () => {
   return (
     <div className="space-y-6 animate-fade-in">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -262,7 +236,7 @@ export const StaffDashboard = ({ user }) => {
 };
 
 /* --- ADMIN VIEW --- */
-export const AdminDashboard = ({ user }) => {
+export const AdminDashboard = () => {
   return (
     <div className="space-y-6 animate-fade-in">
          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

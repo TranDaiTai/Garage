@@ -10,21 +10,24 @@ export const Badge = ({ status }) => {
   switch (status) {
     case "Completed":
     case "Done":
-      colorClass = "bg-green-50 dark:bg-green-500/10 text-green-700 dark:text-green-400"
+    case "Success":
+      colorClass = "bg-green-50 text-green-700 border border-green-100"
       break
     case "Pending":
     case "Todo":
-      colorClass = "bg-yellow-50 dark:bg-yellow-500/10 text-yellow-700 dark:text-yellow-400"
+      colorClass = "bg-secondary text-muted-foreground border border-border"
       break
     case "In Progress":
-      colorClass = "bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400"
+    case "Processing":
+      colorClass = "bg-accent/10 text-primary border border-accent/20"
       break
     case "Cancelled":
+    case "Failed":
     case "High":
-      colorClass = "bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-400"
+      colorClass = "bg-destructive/10 text-destructive border border-destructive/20"
       break
     case "Medium":
-      colorClass = "bg-accent/10 text-primary"
+      colorClass = "bg-primary/5 text-primary border border-primary/10"
       break
   }
 

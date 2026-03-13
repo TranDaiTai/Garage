@@ -1,8 +1,13 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
-import { useAuth } from "@/context/AuthContext"; // giả sử bạn có AuthContext như trước
-import { CartApi } from "@/api/cart/cart.services";
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable no-unused-vars */
+/* eslint-disable react-hooks/set-state-in-effect */
+/* eslint-disable react-refresh/only-export-components */
+/* eslint-disable no-empty */
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useAuth } from "@/context/AuthContext"; 
+import axiosClient from "@/api/axiosClient";
 
 const CartContext = createContext(null);
 
@@ -10,68 +15,82 @@ export function CartProvider({ children }) {
   const [items, setItems] = useState([]);
   const [totalPrice, setTotalPrice] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
-  const { user } = useAuth(); // lấy user từ AuthContext
+  const { user } = useAuth(); 
 
   const loadCart = async () => {
     setIsLoading(true);
     if (user) {
-      // Đã đăng nhập → lấy từ backend
       try {
-        const res = await CartApi.getCart(); // API lấy giỏ hàng từ server
-        setItems(res.data.items);
-        setTotalPrice(res.data.totalAmount);
+        const res = await axiosClient.get("/cart"); 
+        if(res.success && res.data) {
+           // Giả sử API trả về mảng các OrderItem/CartItem ở res.data.items
+           setItems(res.data.items || []);
+           // Tính tổng tiền dựa trên items
+           const computedTotal = (res.data.items || []).reduce((acc, item) => acc + (item.quantity * item.product.price), 0);
+           setTotalPrice(computedTotal);
+        }
       } catch (err) {
         console.error("Load cart failed", err);
       }
     } else {
+      setItems([]);
+      setTotalPrice(0);
     }
     setIsLoading(false);
   };
 
-  // Load giỏ hàng khi mount hoặc khi user thay đổi (login/logout)
   useEffect(() => {
     loadCart();
-  }, [user]); // Chạy lại khi user login/logout
+  }, [user]); 
 
-  // Các hàm thao tác giỏ hàng
+  // ----- Thao tác giỏ hàng -----
   const addItem = async (product, quantity = 1) => {
-    // Nếu đã login → gọi API đồng bộ lên server
     if (user) {
-      await CartApi.addToCard(product.id, quantity).catch(console.error);
-      loadCart();
+      try {
+        await axiosClient.post("/cart/add", { productId: product.id, quantity });
+        loadCart();
+      } catch(e) {
+        console.error("Thêm giỏ hàng thất bại", e);
+      }
+    } else {
+       // Xử lý giỏ hàng offline nếu cần (tuỳ chọn)
+       alert("Vui lòng đăng nhập để mua hàng");
     }
   };
 
   const removeItem = async (productId) => {
     if (user) {
-      await CartApi.removeFromCart(productId).catch(console.error);
-      loadCart();
+      try {
+        await axiosClient.delete(`/cart/remove/${productId}`);
+        loadCart();
+      }catch(e){
+        console.error("Xoá giỏ hàng thất bại", e);
+      }
     }
   };
 
   const updateQuantity = async (productId, quantity) => {
     if (user) {
-      await CartApi.updateQuantity(productId, quantity).catch(console.error);
-      loadCart();
+      try {
+        await axiosClient.put("/cart/update", { productId, quantity });
+        loadCart();
+      } catch(e) {
+        console.error("Cập nhật số lượng thất bại", e);
+      }
     }
   };
 
   const clearCart = async () => {
-    setItems([]);
     if (user) {
-      await CartApi.clearCart().catch(console.error);
-      loadCart();
-    }
-  };
-  const paySubmit = () => {
-    if (user) {
-      CartApi.paySubmit();
+      try{
+        await axiosClient.delete("/cart/clear");
+        loadCart();
+      }catch(e){}
     }
   };
 
   const getTotalItems = () => {
     if (!Array.isArray(items)) return 0;
-
     return items.reduce((total, item) => total + item.quantity, 0);
   };
 

@@ -1,7 +1,7 @@
 import { Star } from "lucide-react";
 import ReviewCard from "@/components/common/ReviewCard";
 import { useState, useEffect, useMemo } from "react";
-import { reviewApi } from "@/api/review/review.services";
+import axiosClient from "@/api/axiosClient";
 import Pagination from "./Pagination";
 
 export default function ReviewComponent({ product }) {
@@ -10,20 +10,32 @@ export default function ReviewComponent({ product }) {
   const [stats, setStats] = useState();
   const [pagination, setPagination] = useState();
   useEffect(() => {
-    const fectReviewsProduct = async () => {
-      const res = await reviewApi.getReviewsProduct(product.id);
-      setReviews(res.data.reviews);
-      setPagination(res.data.pagination);
+    const fetchReviewsProduct = async () => {
+      try {
+        const res = await axiosClient.get(`/reviews/product/${product.id}`);
+        if(res.success) {
+          setReviews(res.data.reviews || []);
+          setPagination(res.data.pagination);
+        }
+      } catch (e) {
+        console.error("Error fetching reviews", e);
+      }
     };
-    fectReviewsProduct();
+    if(product?.id) fetchReviewsProduct();
   }, [selectedFilter, product]);
 
   useEffect(() => {
-    const fectReviewsStats = async () => {
-      const res = await reviewApi.getReviewsProduct(product.id);
-      setStats(res.data.stats);
+    const fetchReviewsStats = async () => {
+      try {
+        const res = await axiosClient.get(`/reviews/product/${product.id}/stats`);
+        if(res.success) {
+          setStats(res.data.stats);
+        }
+      } catch (e) {
+        console.error("Error fetching stats", e);
+      }
     };
-    fectReviewsStats();
+    if(product?.id) fetchReviewsStats();
   }, [product]);
 
   const handleFilterChange = (change) => {
@@ -38,13 +50,13 @@ export default function ReviewComponent({ product }) {
     if (!selectedFilter || !reviews) return reviews;
 
     return reviews.filter((review) => {
-      if (selectedFilter === "media") {
+      if (selectedFilter.rating === "media") {
         return review.media?.length > 0;
       }
-      if (selectedFilter === "comments") {
+      if (selectedFilter.rating === "comments") {
         return review.comments?.length > 0;
       }
-      return Math.round(review.rating) === selectedFilter;
+      return selectedFilter.rating ? Math.round(review.rating) === selectedFilter.rating : true;
     });
   }, [reviews, selectedFilter]);
 
@@ -111,15 +123,15 @@ export default function ReviewComponent({ product }) {
 
       {/* Reviews List */}
       <div className="space-y-4">
-        {reviews?.map((review) => (
+        {filteredReviews?.map((review) => (
           <ReviewCard
             key={review.id}
             review={review}
-            onLike={() => handleLikeReview(review.id)}
+            onLike={() => handleLikeReview()}
           />
         ))}
 
-        {(!reviews || reviews.length === 0) && (
+        {(!filteredReviews || filteredReviews.length === 0) && (
           <div className="text-center py-8 text-muted-foreground">
             Không có đánh giá nào phù hợp với bộ lọc
           </div>
@@ -134,3 +146,8 @@ export default function ReviewComponent({ product }) {
     
   );
 }
+
+
+
+
+

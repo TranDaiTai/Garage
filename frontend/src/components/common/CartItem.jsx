@@ -23,7 +23,7 @@ export function CartItem({ items ,updateQuantity,removeItem,clearCart  }) {
             <div className="flex-1 flex flex-col justify-between">
               <div>
                 <Link
-                  to={`/product/${item.product?.id}`}
+                  to={`/product/${item.product?.slug || item.product?.id}`}
                   className="text-foreground font-semibold hover:text-accent transition-colors"
                 >
                   {item.product?.name}
