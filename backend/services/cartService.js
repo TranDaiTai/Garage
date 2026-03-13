@@ -1,13 +1,6 @@
 const prisma = require("../src/lib/prisma");
 
-/**
- * Lấy giỏ hàng của user
- */
-
-exports.getCart = async (
-  userId,
-  { page = 1, limit = 8, search = "", sort = "newest" }
-) => {
+exports.getCart = async (userId, { page = 1, limit = 8, search = "", sort = "newest" }) => {
   if (!userId) throw new Error("Unauthorized");
 
   const cart = await prisma.cart.findUnique({
@@ -51,21 +44,27 @@ exports.getCart = async (
             },
           },
         },
+        variant: true,
       },
     }),
     prisma.cartItem.count({ where: whereItem }),
   ]);
 
-  const mappedItems = items.map((item) => ({
-    id: item.id,
-    quantity: item.quantity,
-    itemTotal: item.quantity * Number(item.product.price),
-    product: {
-      ...item.product,
-      mainImage: item.product.images[0]?.imageUrl || null,
-      images: undefined,
-    },
-  }));
+  const mappedItems = items.map((item) => {
+    // Ưu tiên giá của variant nếu có, nếu không lấy giá product
+    const actualPrice = item.variant?.price ? item.variant.price : item.product.price;
+    return {
+      id: item.id,
+      quantity: item.quantity,
+      itemTotal: item.quantity * Number(actualPrice),
+      product: {
+        ...item.product,
+        mainImage: item.product.images[0]?.imageUrl || null,
+        images: undefined,
+      },
+      variant: item.variant,
+    };
+  });
 
   const totalAmount = mappedItems.reduce((sum, i) => sum + i.itemTotal, 0);
 
@@ -81,7 +80,7 @@ exports.getCart = async (
   };
 };
 
-exports.addToCart = async (userId, { productId, quantity = 1 }) => {
+exports.addToCart = async (userId, { productId, variantId, quantity = 1 }) => {
   if (!userId || !productId) throw new Error("Invalid input");
 
   const cart = await prisma.cart.upsert({
@@ -90,41 +89,50 @@ exports.addToCart = async (userId, { productId, quantity = 1 }) => {
     update: {},
   });
 
-  const existing = await prisma.cartItem.findUnique({
-     where: {
-      cartId_productId: {
-        cartId: cart.id,
-        productId:productId,
-      }
-    }
-  })
-  if( existing ){
-   
-    return this.updateCartItem(userId,{productId, quantity : existing.quantity+quantity})
+  const existingItem = await prisma.cartItem.findFirst({
+    where: {
+      cartId: cart.id,
+      productId: productId,
+      variantId: variantId || null,
+    },
+  });
+
+  if (existingItem) {
+    return this.updateCartItem(userId, { 
+      cartItemId: existingItem.id, 
+      quantity: existingItem.quantity + quantity 
+    });
   }
 
   return prisma.cartItem.create({
     data: {
       cartId: cart.id,
       productId,
+      variantId: variantId || null,
       quantity,
     },
   });
-
 };
 
-exports.updateCartItem = async (userId, { productId, quantity }) => {
+exports.updateCartItem = async (userId, { cartItemId, productId, variantId, quantity }) => {
   if (!userId) throw new Error("Unauthorized");
 
   const cart = await prisma.cart.findUnique({
-    where: {
-      userId: userId,
-    },
+    where: { userId },
   });
   if (!cart) throw new Error("cart not found");
-  const cartitem = await prisma.cartItem.findFirst({
-    where: { cartId: cart.id, productId: productId },
-  });
+
+  let cartitem;
+  if (cartItemId) {
+    cartitem = await prisma.cartItem.findFirst({
+      where: { id: cartItemId, cartId: cart.id },
+    });
+  } else {
+    cartitem = await prisma.cartItem.findFirst({
+      where: { cartId: cart.id, productId, variantId: variantId || null },
+    });
+  }
+
   if (!cartitem) throw new Error("cartItem not found");
 
   return prisma.cartItem.update({
@@ -133,37 +141,41 @@ exports.updateCartItem = async (userId, { productId, quantity }) => {
   });
 };
 
-exports.removeFromCart = async (userId, productId) => {
+exports.removeFromCart = async (userId, { cartItemId, productId, variantId }) => {
   if (!userId) throw new Error("Unauthorized");
 
   const cart = await prisma.cart.findUnique({
-    where: {
-      userId: userId,
-    },
+    where: { userId },
   });
+  if (!cart) throw new Error("cart not found");
 
-  
- if (!cart) throw new Error("cart not found");
-  const cartitem = await prisma.cartItem.findFirst({
-    where: { cartId: cart.id, productId: productId },
-  });
+  let cartitem;
+  if (cartItemId) {
+    cartitem = await prisma.cartItem.findFirst({
+      where: { id: cartItemId, cartId: cart.id },
+    });
+  } else {
+    cartitem = await prisma.cartItem.findFirst({
+      where: { cartId: cart.id, productId, variantId: variantId || null },
+    });
+  }
+
   if (!cartitem) throw new Error("cartItem not found");
 
   await prisma.cartItem.delete({
     where: { id: cartitem.id },
   });
+  return true;
 };
 
 exports.clearCart = async (userId) => {
   if (!userId) throw new Error("Unauthorized");
 
-  const cart = await prisma.cart.findFirst({
-    where: {
-      userId: userId,
-    },
+  const cart = await prisma.cart.findUnique({
+    where: { userId },
   });
-
-  if (!cart) throw new Error("cart not found");
+  if (!cart) return;
 
   await prisma.cartItem.deleteMany({ where: { cartId: cart.id } });
+  return true;
 };

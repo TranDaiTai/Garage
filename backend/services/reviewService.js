@@ -122,3 +122,53 @@ exports.getReviewsByProductId = async (
     },
   };
 };
+
+exports.createReview = async (userId, { productId, rating, title, content, images = [] }) => {
+  if (!productId || !rating) throw new Error("Missing required fields: productId and rating");
+
+  // Kiểm tra sản phẩm có tồn tại không
+  const product = await prisma.product.findUnique({
+    where: { id: Number(productId) },
+  });
+  if (!product) throw new Error("Product not found");
+
+  // Tạo transaction để: 
+  // 1. Tạo Review
+  // 2. Cập nhật reviewsCount và rating trung bình trong Product
+  return await prisma.$transaction(async (tx) => {
+    // 1. Tạo Review record
+    const newReview = await tx.review.create({
+      data: {
+        productId: Number(productId),
+        userId: userId ? Number(userId) : null,
+        rating: Number(rating),
+        title,
+        content,
+        authorDisplay: userId ? undefined : "Guest",
+        images: {
+          create: images.map(img => ({ imageUrl: img }))
+        }
+      },
+      include: {
+        images: true
+      }
+    });
+
+    // 2. Lấy lại stats mới để cập nhật cho Product
+    const avgData = await tx.review.aggregate({
+      where: { productId: Number(productId) },
+      _avg: { rating: true },
+      _count: { id: true }
+    });
+
+    await tx.product.update({
+      where: { id: Number(productId) },
+      data: {
+        rating: avgData._avg.rating || 0,
+        reviewsCount: avgData._count.id || 0
+      }
+    });
+
+    return newReview;
+  });
+};

@@ -29,10 +29,25 @@ const { authMiddleware, adminMiddleware } = require('../middleware/middleware');
  *                 type: array
  *                 items:
  *                   type: object
+ *                   properties:
+ *                     productId:
+ *                       type: integer
+ *                     variantId:
+ *                       type: integer
+ *                     quantity:
+ *                       type: integer
+ *                     price:
+ *                       type: number
+ *                     subtotal:
+ *                       type: number
  *               totalAmount:
  *                 type: number
  *               paymentMethod:
  *                 type: string
+ *               shippingMethodId:
+ *                 type: integer
+ *               shippingFee:
+ *                 type: number
  *     responses:
  *       201:
  *         description: Đặt hàng thành công
@@ -73,6 +88,34 @@ router.get('/', authMiddleware, orderController.getUserOrders); // Lịch sử �
  */
 router.get('/:id', authMiddleware, orderController.getOrderById); // Chi tiết đơn hàng
 
+/**
+ * @swagger
+ * /api/orders/{id}/status:
+ *   put:
+ *     summary: Cập nhật trạng thái đơn (Admin/Staff)
+ *     tags: [Orders]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               status:
+ *                 type: string
+ *                 description: Trạng thái mới (pending, processing, shipped, delivered, cancelled)
+ *     responses:
+ *       200:
+ *         description: Trả về trạng thái đã cập nhật
+ */
 router.put('/:id/status', authMiddleware, adminMiddleware, orderController.updateOrderStatus); // Admin update
 
 module.exports = router;

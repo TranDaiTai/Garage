@@ -31,3 +31,30 @@ exports.getReviewsByProductId = async (req, res) => {
     });
   }
 };
+
+exports.createReview = async (req, res) => {
+  const userId = req.userId || null; // Lấy từ authMiddleware nếu có
+  const { productId, rating, title, content, images } = req.body;
+
+  try {
+    const newReview = await reviewService.createReview(userId, {
+      productId,
+      rating,
+      title,
+      content,
+      images
+    });
+
+    res.status(201).json({
+      success: true,
+      data: newReview,
+      message: "Đánh giá sản phẩm thành công!"
+    });
+  } catch (err) {
+    console.error("Error creating review:", err);
+    res.status(400).json({
+      success: false,
+      message: err.message || "Không thể gửi đánh giá lúc này."
+    });
+  }
+};

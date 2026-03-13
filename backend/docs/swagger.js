@@ -1,4 +1,5 @@
 const swaggerJsDoc = require("swagger-jsdoc");
+const path = require("path");
 
 // Cấu hình tuỳ biến cho thông tin API
 const swaggerOptions = {
@@ -35,7 +36,8 @@ const swaggerOptions = {
     ],
   },
   // Đường dẫn đến các file chứa custom jsdoc comments
-  apis: ["./routes/*.js"],
+  // Quan trọng: Trên Windows, glob (của swagger-jsdoc) hoạt động tốt nhất với forward-slashes
+  apis: [path.resolve(__dirname, "../routes/*.js").replace(/\\/g, "/")],
 };
 
 const swaggerDocs = swaggerJsDoc(swaggerOptions);

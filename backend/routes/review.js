@@ -1,48 +1,99 @@
-// const express = require("express");
-// const router = express.Router();
-// const reviewController = require('../controllers/reviewController')
-// const SAMPLE_REVIEWS = [
-//   {
-//     id: 1,
-//     author: "e*****a",
-//     rating: 5,
-//     date: "2025-06-10 17:18",
-//     location: "Malaysia",
-//     title: "Vải theo giá, thích hợp sử dụng",
-//     content:
-//       "Sản phẩm này thực sự rất tốt. Chất lượng vượt quá mong đợi của tôi. Giao hàng nhanh và đóng gói cẩn thận.",
-//     images: ["/product-review-1.png", "/product-review-2.jpg"],
-//     likes: 125,
-//     productid: 1, 
-//   },
-//   {
-//     id: 2,
-//     author: "h*****m",
-//     rating: 5,
-//     date: "2025-06-08 09:45",
-//     location: "Ho Chi Minh",
-//     title: "Rất hài lòng với chất lượng",
-//     content: "Sản phẩm chất lượng cao, đúng như mô tả. Sẽ mua lại lần nữa.",
-//     images: [],
-//     likes: 89,
-//     productid: 1, 
+const express = require("express");
+const router = express.Router();
+const reviewController = require('../controllers/reviewController');
+const { authMiddleware } = require('../middleware/middleware');
 
-//   },
-//   {
-//     id: 3,
-//     author: "n*****g",
-//     rating: 4,
-//     date: "2025-06-05 14:20",
-//     location: "Ha Noi",
-//     title: "Tốt nhưng cần cải thiện",
-//     content: "Sản phẩm chất lượng, nhưng giá hơi cao. Vẫn đáng mua.",
-//     images: [],
-//     likes: 52,
-//     productid: 1, 
-//   },
-// ];
+/**
+ * @swagger
+ * tags:
+ *   name: Reviews
+ *   description: API Quản lý đánh giá sản phẩm
+ */
 
-// router.get("/product/:id", cartController.getReviewByProductId)  
+/**
+ * @swagger
+ * /api/reviews/product/{productId}:
+ *   get:
+ *     summary: Lấy danh sách đánh giá của một sản phẩm
+ *     tags: [Reviews]
+ *     parameters:
+ *       - in: path
+ *         name: productId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID của sản phẩm
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Trang hiện tại
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 8
+ *         description: Số lượng đánh giá mỗi trang
+ *       - in: query
+ *         name: rating
+ *         schema:
+ *           type: integer
+ *           enum: [1, 2, 3, 4, 5]
+ *         description: Lọc theo số sao
+ *       - in: query
+ *         name: hasMedia
+ *         schema:
+ *           type: boolean
+ *           default: false
+ *         description: Chỉ lấy các đánh giá có hình ảnh
+ *       - in: query
+ *         name: sort
+ *         schema:
+ *           type: string
+ *           enum: [rating-asc, rating-desc, likes-desc]
+ *         description: Sắp xếp theo tiêu chí
+ *     responses:
+ *       200:
+ *         description: Thành công, trả về danh sách đánh giá và thống kê (stats)
+ */
+router.get("/product/:productId", reviewController.getReviewsByProductId);
 
+/**
+ * @swagger
+ * /api/reviews:
+ *   post:
+ *     summary: Gửi đánh giá cho một sản phẩm
+ *     tags: [Reviews]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [productId, rating]
+ *             properties:
+ *               productId:
+ *                 type: integer
+ *               rating:
+ *                 type: integer
+ *                 minimum: 1
+ *                 maximum: 5
+ *               title:
+ *                 type: string
+ *               content:
+ *                 type: string
+ *               images:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 description: Danh sách URL hình ảnh đã upload
+ *     responses:
+ *       201:
+ *         description: Đánh giá thành công
+ */
+router.post("/", authMiddleware, reviewController.createReview);
 
-// module.exports = router
+module.exports = router;
