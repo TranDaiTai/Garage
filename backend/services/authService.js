@@ -11,6 +11,10 @@ exports.login = async (username, password) => {
     where: {
       username: username, // hoặc email: username nếu bạn dùng email để login
     },
+    include: {
+      addresses: true, // ví dụ nếu bạn muốn lấy luôn địa chỉ liên quan
+      role: true,    // ví dụ nếu bạn có bảng roles liên quan
+    },
   });
 
   // Nếu không tìm thấy user

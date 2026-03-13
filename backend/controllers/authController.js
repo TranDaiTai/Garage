@@ -42,7 +42,7 @@ exports.login = async (req, res) => {
     // Có thể lưu refreshToken vào httpOnly cookie để tăng bảo mật (khuyến nghị)
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      sameSite: "strict",
+      // sameSite: "strict",
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 ngày
     });
     // ddeer demo backend
@@ -55,7 +55,7 @@ exports.login = async (req, res) => {
     res.json({
       success: true,
       message: "Đăng nhập thành công",
-      data: { userId: result.user.id, username: result.user.username },
+      data: result,
     });
   } catch (err) {
     console.error(err);
@@ -84,7 +84,7 @@ exports.refreshToken = async (req, res) => {
           message: "Refresh token không hợp lệ hoặc đã hết hạn",
         });
       }
-      const {userId, username} = payload
+      const {userId, username, role} = payload
       // Tạo access token mới từ payload của refresh token
       const newAccessToken = jwt.sign({userId,username}, process.env.JWT_SECRET, {
         expiresIn: "15m",
