@@ -1,7 +1,8 @@
 // require('dotenv').config();
 const jwt = require("jsonwebtoken");
 const prisma = require("../src/lib/prisma");
-const authService = require("../services/authService"); // giả sử bạn có file api gọi đến DB hoặc service xác thực
+const authService = require("../services/authService");
+const { toUserDTO } = require("../utils/mappers");
 
 // Đăng nhập
 exports.login = async (req, res) => {
@@ -57,7 +58,7 @@ exports.login = async (req, res) => {
       success: true,
       message: "Đăng nhập thành công",
       data: {
-        ...result,
+        user: toUserDTO(result.user),
         accessToken
       },
     });
@@ -157,11 +158,9 @@ exports.verify = (req, res) => {
 
     if(!user) return res.status(404).json({ success: false, message: "User not found" });
 
-    const { passwordHash: _, ...userWithoutPassword } = user;
-    
     return res.json({
       success: true,
-      data: { user: userWithoutPassword },
+      data: { user: toUserDTO(user) },
     });
   });
 };

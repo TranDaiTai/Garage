@@ -1,6 +1,7 @@
 // src/controllers/productController.js
 
 const productService = require("../services/productService");
+const { toProductDTO } = require("../utils/mappers");
 
 exports.getAllProducts = async (req, res) => {
   try {
@@ -38,7 +39,7 @@ exports.getAllProducts = async (req, res) => {
       success: true,
       message: "Lấy sản phẩm thành công",
       data: {
-        products: result.products,
+        products: result.products.map(toProductDTO),
         pagination: result.pagination,
       },
     });
@@ -67,7 +68,7 @@ exports.getProductById = async (req, res) => {
         .json({ success: false, message: "Không tìm thấy sản phẩm" });
     }
 
-    res.json({ success: true, data: { product: product } });
+    res.json({ success: true, data: { product: toProductDTO(product) } });
   } catch (err) {
     console.error("Error in getProductById:", err);
     res.status(400).json({ success: false, message: "Lỗi server" });
@@ -92,7 +93,7 @@ exports.getProductBySlug = async (req, res) => {
         .json({ success: false, message: "Không tìm thấy sản phẩm" });
     }
 
-    res.json({ success: true, data: { product: product } });
+    res.json({ success: true, data: { product: toProductDTO(product) } });
   } catch (err) {
     console.error("Error in getProductBySlug:", err);
     res.status(400).json({ success: false, message: "Lỗi server" });
