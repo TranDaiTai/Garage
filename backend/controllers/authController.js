@@ -1,5 +1,6 @@
 // require('dotenv').config();
 const jwt = require("jsonwebtoken");
+const prisma = require("../src/lib/prisma");
 const authService = require("../services/authService"); // giả sử bạn có file api gọi đến DB hoặc service xác thực
 
 // Đăng nhập
@@ -55,7 +56,10 @@ exports.login = async (req, res) => {
     res.json({
       success: true,
       message: "Đăng nhập thành công",
-      data: result,
+      data: {
+        ...result,
+        accessToken
+      },
     });
   } catch (err) {
     console.error(err);
@@ -131,12 +135,12 @@ exports.logout = async (req, res) => {
     message: "Đăng xuất thành công",
   });
 };
-exports.verify = (rep, res) => {
-  const { accessToken } = rep.cookies;
+exports.verify = (req, res) => {
+  const { accessToken } = req.cookies;
   if (!accessToken)
     return res.status(401).json({
       success: false,
-      message: "chua dang nhap",
+      message: "Chưa đăng nhập",
     });
   jwt.verify(accessToken, process.env.JWT_SECRET, async (err, payload) => {
     if (err)

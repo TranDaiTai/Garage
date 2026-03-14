@@ -23,17 +23,13 @@ exports.login = async (username, password) => {
   // Nếu không tìm thấy user
   if (!user) throw new Error("username or password is not correctly");
 
-  // Kiểm tra mật khẩu
-  // LƯU Ý: Prisma KHÔNG tự mã hóa mật khẩu!
-  // Bạn PHẢI dùng bcrypt để so sánh mật khẩu đã hash
-  // const bcrypt = require('bcrypt');
-
-  const isPasswordValid = password == user.passwordHash ? true : false;
+  const bcrypt = require("bcryptjs");
+  const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
 
   if (!isPasswordValid)
     throw new Error("username or password is not correctly");
-  // Thành công → trả về user (không trả password!)
-  const { password: _, ...userWithoutPassword } = user; // loại bỏ trường password
+  // Thành công → trả về user (không trả mật khẩu!)
+  const { passwordHash: _, ...userWithoutPassword } = user;
 
   return {
     user: userWithoutPassword,

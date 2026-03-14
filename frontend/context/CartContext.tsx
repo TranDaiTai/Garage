@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useAuth } from "./AuthContext";
 import { cartService } from "@/services/cartService";
+import { getImageUrl } from "@/lib/utils";
 
 interface CartItem {
   id: number;
@@ -51,7 +52,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
                 slug: item.product?.slug || "",
                 name: item.product?.name || `Product ${item.product?.id || item.productId}`,
                 price: item.price || item.product?.price || 0,
-                image: item.product?.images?.[0]?.imageUrl || item.product?.image || "",
+                image: getImageUrl(item.product?.images?.[0]?.imageUrl || item.product?.image || ""),
                 quantity: item.quantity,
                 cartItemId: item.id,
                 variantId: item.variantId
@@ -86,7 +87,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   }, [items, user, initialized]);
 
   const addToCart = async (product: any, quantity: number = 1) => {
-    const existing = items.find((item) => item.id === product.id);
+    const existing = items.find((item) => 
+      item.id === product.id && item.variantId === product.variantId
+    );
 
     if (user) {
        try {
@@ -134,9 +137,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const updateQuantity = async (id: number, quantity: number) => {
+  const updateQuantity = async (id: number, quantity: number, variantId?: number) => {
     if (quantity < 1) return;
-    const itemToUpdate = items.find(i => i.id === id);
+    const itemToUpdate = items.find(i => i.id === id && i.variantId === variantId);
     if (!itemToUpdate) return;
 
     if (user) {

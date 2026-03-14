@@ -1,25 +1,84 @@
 "use client";
 
-import { motion, useScroll, useTransform } from "framer-motion";
+import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
 import Link from "next/link";
-import { ArrowRight, Sparkles, ShieldCheck, Zap, ShoppingBag, ChevronRight, ChevronLeft } from "lucide-react";
+import { ArrowRight, Sparkles, ShieldCheck, Zap, ShoppingBag, ChevronRight, ChevronLeft, Leaf, Star } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { useQuery } from "@tanstack/react-query";
 import { productService } from "@/services/productService";
 import ProductCard from "@/components/product/ProductCard";
-import { useRef } from "react";
+import { useRef, useState, useEffect, useCallback } from "react";
 
-const fadeUp = {
-  initial: { opacity: 0, y: 30 },
-  whileInView: { opacity: 1, y: 0 },
-  viewport: { once: true, margin: "-100px" },
-  transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] }
-};
+const SLIDES = [
+  {
+    badge: "Bộ sưu tập 2026 • Mới nhất",
+    badgeIcon: Sparkles,
+    title: ["Nâng Tầm", "Phong Cách", "Bền Vững"],
+    titleAccent: 1, // index of the italic accent line
+    description: "EcoMarket không chỉ là mua sắm, đó là tuyên ngôn về lối sống hiện đại và trách nhiệm với môi trường.",
+    cta: "Khám phá ngay",
+    ctaHref: "/shop",
+    image: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=1200&q=80",
+    imageAlt: "Premium Fashion",
+    badge2: "Luxury Eco Fashion",
+    badge2Sub: "Sustainably Crafted",
+    accent: "#4F6F52",
+    stat: { value: "2026", label: "Bộ sưu tập mới" },
+  },
+  {
+    badge: "Phong cách tối giản • Premium",
+    badgeIcon: Star,
+    title: ["Phụ Kiện", "Tối Giản", "Tinh Tế"],
+    titleAccent: 2,
+    description: "Những phụ kiện được chắt lọc từ vật liệu tái chế cao cấp, mang vẻ đẹp thuần khiết và bền bỉ theo thời gian.",
+    cta: "Khám phá bộ sưu tập",
+    ctaHref: "/shop?category=accessories",
+    image: "https://images.unsplash.com/photo-1524592094714-0f0654e20314?auto=format&fit=crop&w=1200&q=80",
+    imageAlt: "Minimal Accessories",
+    badge2: "Minimal Collection",
+    badge2Sub: "Zero Waste",
+    accent: "#4F6F52",
+    stat: { value: "100%", label: "Vật liệu tái chế" },
+  },
+  {
+    badge: "Thời trang bền vững • Eco",
+    badgeIcon: Leaf,
+    title: ["Thời Trang", "Vì", "Trái Đất"],
+    titleAccent: 1,
+    description: "Mỗi sản phẩm chúng tôi bán đi, một cây xanh được trồng. Thời trang không chỉ đẹp mà còn có ý nghĩa.",
+    cta: "Tham gia phong trào",
+    ctaHref: "/shop",
+    image: "https://images.unsplash.com/photo-1558769132-cb1aea458c5e?auto=format&fit=crop&w=1200&q=80",
+    imageAlt: "Sustainable Fashion",
+    badge2: "Green Initiative",
+    badge2Sub: "1 Product = 1 Tree",
+    accent: "#4F6F52",
+    stat: { value: "10K+", label: "Cây đã trồng" },
+  },
+];
 
 export default function HomePage() {
   const scrollRef = useRef<HTMLDivElement>(null);
-  
+  const [current, setCurrent] = useState(0);
+  const [direction, setDirection] = useState(1); // 1 = forward, -1 = backward
+  const [isPaused, setIsPaused] = useState(false);
+
+  const goTo = useCallback((idx: number) => {
+    setDirection(idx > current ? 1 : -1);
+    setCurrent(idx);
+  }, [current]);
+
+  // Autoplay
+  useEffect(() => {
+    if (isPaused) return;
+    const timer = setInterval(() => {
+      setDirection(1);
+      setCurrent(prev => (prev + 1) % SLIDES.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [isPaused]);
+
   const { data: categoriesData = [] } = useQuery({
     queryKey: ["categories"],
     queryFn: () => productService.getCategories(),
@@ -32,7 +91,8 @@ export default function HomePage() {
     queryFn: () => productService.getAllProducts("limit=10"),
   });
 
-  const featuredProducts = Array.isArray(productsData) ? productsData : [];
+  const rawProducts: any = productsData;
+  const featuredProducts: any[] = rawProducts?.products ?? (Array.isArray(rawProducts) ? rawProducts : []);
 
   const scrollLeft = () => {
     if (scrollRef.current) {
@@ -45,80 +105,147 @@ export default function HomePage() {
       scrollRef.current.scrollBy({ left: 400, behavior: "smooth" });
     }
   };
+const fadeUp = {
+  initial: { opacity: 0, y: 30 },
+  whileInView: { opacity: 1, y: 0 },
+  viewport: { once: true, margin: "-100px" },
+  transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] }
+};
+
 
   return (
     <main className="min-h-screen bg-white">
       <Navbar />
       
-      {/* Hero Section */}
-      <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden pt-32 pb-20 bg-gray-50/30">
-        <div className="absolute inset-0 z-0 opacity-30">
-          <div className="absolute top-0 right-0 w-[800px] h-[820px] bg-accent/5 rounded-full blur-[150px] -mr-96 -mt-96 animate-pulse" />
+      {/* Hero Carousel */}
+      <section
+        className="relative min-h-[90vh] flex items-center overflow-hidden bg-gray-50/30 pt-24"
+        onMouseEnter={() => setIsPaused(true)}
+        onMouseLeave={() => setIsPaused(false)}
+      >
+        {/* Background glow */}
+        <div className="absolute inset-0 z-0 pointer-events-none">
+          <div className="absolute top-0 right-0 w-[800px] h-[820px] bg-accent/5 rounded-full blur-[150px] -mr-96 -mt-96" />
           <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-blue-500/5 rounded-full blur-[120px] -ml-64 -mb-64" />
         </div>
 
-        <div className="max-w-7xl mx-auto px-6 grid md:grid-cols-2 gap-20 items-center z-10">
-          <motion.div 
-            initial={{ opacity: 0, x: -30 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
-            className="space-y-10"
-          >
-            <div className="inline-flex items-center gap-3 px-5 py-2.5 bg-white rounded-full border border-gray-100 shadow-sm transition-transform hover:scale-105">
-               <Sparkles className="w-4 h-4 text-accent" />
-               <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary/60">Bộ sưu tập 2026 đã sẵn sàng</span>
-            </div>
-            
-            <div className="space-y-2">
-              <h1 className="text-7xl md:text-8xl font-bold text-primary tracking-tight leading-[1.05]">
-                Nâng Tầm <br /> 
-                <span className="text-accent italic font-serif font-medium">Phong Cách</span> <br />
-                Bền Vững
-              </h1>
-            </div>
-            
-            <p className="text-xl text-muted-foreground font-medium italic max-w-lg leading-relaxed opacity-80">
-              "EcoMarket không chỉ là mua sắm, đó là tuyên ngôn về lối sống hiện đại và trách nhiệm với môi trường."
-            </p>
+        <div className="max-w-7xl mx-auto px-6 w-full z-10">
+          <div className="grid md:grid-cols-2 gap-16 items-center min-h-[75vh]">
 
-            <div className="flex items-center gap-8 pt-4">
-               <Link href="/shop" className="btn-primary px-10 py-5 flex items-center gap-4 group">
-                  Khám phá ngay <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-               </Link>
-               <Link 
-                href="/about" 
-                className="relative text-[10px] font-bold uppercase tracking-[0.2em] text-primary group/cta py-2"
-               >
-                  Tìm hiểu thêm
-                  <div className="absolute bottom-0 left-0 w-full h-0.5 bg-accent scale-x-0 group-hover/cta:scale-x-100 transition-transform duration-500 origin-left" />
-               </Link>
-            </div>
-          </motion.div>
+            {/* Left — Text content */}
+            <div className="relative overflow-hidden py-8">
+              <AnimatePresence mode="wait" custom={direction}>
+                <motion.div
+                  key={current}
+                  custom={direction}
+                  initial={{ opacity: 0, x: -60 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 60 }}
+                  transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
+                  className="space-y-8"
+                >
+                  {/* Badge */}
+                  <div className="inline-flex items-center gap-3 px-5 py-2.5 bg-white rounded-full border border-gray-100 shadow-sm">
+                    {(() => { const Icon = SLIDES[current].badgeIcon; return <Icon className="w-4 h-4 text-accent" />; })()}
+                    <span className="text-xs font-bold uppercase tracking-[0.2em] text-primary/60">{SLIDES[current].badge}</span>
+                  </div>
 
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 1.2, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            className="hidden md:block relative w-full aspect-[4/5]"
-          >
-            <div className="w-full h-full bg-gradient-to-tr from-secondary/30 to-white rounded-3xl border border-white shadow-2xl relative overflow-hidden group">
-              <img 
-                src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=1200&q=80" 
-                alt="Premium Fashion" 
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000 opacity-95"
-              />
-              <div className="absolute inset-0 ring-1 ring-inset ring-black/5 rounded-3xl" />
+                  {/* Title */}
+                  <h1 className="text-7xl md:text-8xl font-bold text-primary tracking-tight leading-[1.05]">
+                    {SLIDES[current].title.map((line, i) =>
+                      i === SLIDES[current].titleAccent
+                        ? <span key={i} className="block text-accent italic font-serif font-medium">{line}</span>
+                        : <span key={i} className="block">{line}</span>
+                    )}
+                  </h1>
+
+                  {/* Description */}
+                  <p className="text-xl text-muted-foreground font-medium italic max-w-lg leading-relaxed opacity-80">
+                    "{SLIDES[current].description}"
+                  </p>
+
+                  {/* CTA */}
+                  <div className="flex items-center gap-8 pt-2">
+                    <Link
+                      href={SLIDES[current].ctaHref}
+                      className="btn-primary px-10 py-5 flex items-center gap-4 group"
+                    >
+                      {SLIDES[current].cta}
+                      <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                    </Link>
+                    <Link
+                      href="/about"
+                      className="relative text-xs font-bold uppercase tracking-[0.2em] text-primary group/cta py-2"
+                    >
+                      Tìm hiểu thêm
+                      <div className="absolute bottom-0 left-0 w-full h-0.5 bg-accent scale-x-0 group-hover/cta:scale-x-100 transition-transform duration-500 origin-left" />
+                    </Link>
+                  </div>
+
+                  {/* Nav Dots */}
+                  <div className="flex items-center gap-2 pt-4">
+                    {SLIDES.map((_, i) => (
+                      <button
+                        key={i}
+                        onClick={() => goTo(i)}
+                        aria-label={`Slide ${i + 1}`}
+                        className={`h-2 rounded-full transition-all duration-500 ${
+                          i === current
+                            ? 'w-10 bg-accent'
+                            : 'w-2 bg-primary/20 hover:bg-primary/40'
+                        }`}
+                      />
+                    ))}
+                    <span className="ml-3 text-xs font-bold text-primary/30 uppercase tracking-widest">
+                      {String(current + 1).padStart(2, '0')} / {String(SLIDES.length).padStart(2, '0')}
+                    </span>
+                  </div>
+                </motion.div>
+              </AnimatePresence>
             </div>
-            {/* Decorative Label */}
-            <motion.div 
-              animate={{ y: [0, -10, 0] }}
-              transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
-              className="absolute -bottom-6 -right-6 glass-effect p-6 rounded-2xl shadow-2xl z-20 border-white/50"
-            >
-              <p className="text-[10px] font-black uppercase tracking-widest text-primary">Luxury Eco Fashion</p>
-              <p className="text-[8px] font-semibold text-accent uppercase tracking-widest mt-1">Sustainably Crafted</p>
-            </motion.div>
-          </motion.div>
+
+            {/* Right — Product image */}
+            <div className="hidden md:block relative w-full aspect-[4/5]">
+              <AnimatePresence mode="wait" custom={direction}>
+                <motion.div
+                  key={current}
+                  custom={direction}
+                  initial={{ opacity: 0, x: 60, scale: 0.97 }}
+                  animate={{ opacity: 1, x: 0, scale: 1 }}
+                  exit={{ opacity: 0, x: -60, scale: 0.97 }}
+                  transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
+                  className="w-full h-full"
+                >
+                  <div className="w-full h-full bg-gradient-to-tr from-secondary/30 to-white rounded-3xl border border-white shadow-2xl relative overflow-hidden group">
+                    <img
+                      src={SLIDES[current].image}
+                      alt={SLIDES[current].imageAlt}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000 opacity-95"
+                    />
+                    <div className="absolute inset-0 ring-1 ring-inset ring-black/5 rounded-3xl" />
+                  </div>
+
+                  {/* Floating stat badge */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4, duration: 0.5 }}
+                    className="absolute -bottom-6 -right-6 glass-effect p-6 rounded-2xl shadow-2xl z-20 border-white/50"
+                  >
+                    <p className="text-2xl font-black text-primary">{SLIDES[current].stat.value}</p>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-accent mt-0.5">{SLIDES[current].stat.label}</p>
+                  </motion.div>
+
+                  {/* Slide indicator on image */}
+                  <div className="absolute top-6 left-6 flex gap-1.5">
+                    {SLIDES.map((_, i) => (
+                      <div key={i} className={`h-1 rounded-full transition-all duration-500 ${i === current ? 'w-8 bg-white' : 'w-1 bg-white/40'}`} />
+                    ))}
+                  </div>
+                </motion.div>
+              </AnimatePresence>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -154,7 +281,9 @@ export default function HomePage() {
                   className={`${bentoClasses} group relative rounded-2xl overflow-hidden bg-secondary shadow-sm hover:shadow-2xl transition-all duration-700`}
                 >
                   <img 
-                    src={category.image || `https://images.unsplash.com/photo-1523381210434-271e8be1f52b?auto=format&fit=crop&w=800&q=80`}
+                    src={category.imageUrl 
+                      ? (category.imageUrl.startsWith('http') ? category.imageUrl : `${process.env.NEXT_PUBLIC_API_URL?.replace('/api','') || 'http://localhost:5000'}${category.imageUrl}`)
+                      : `https://images.unsplash.com/photo-1523381210434-271e8be1f52b?auto=format&fit=crop&w=800&q=80`}
                     alt={category.name}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000"
                   />
@@ -231,26 +360,7 @@ export default function HomePage() {
       </motion.section>
 
       {/* Social Trust */}
-      <motion.section {...fadeUp} className="py-24 border-y border-gray-100 bg-white">
-        <div className="max-w-7xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-12">
-          {[
-            { icon: ShieldCheck, label: "Bảo hành 12 tháng", desc: "Chính sách đổi trả linh hoạt" },
-            { icon: Zap, label: "Giao hàng siêu tốc", desc: "Nhận hàng trong 2h nội thành" },
-            { icon: Sparkles, label: "Chất liệu Organic", desc: "Cam kết an toàn tuyệt đối" },
-            { icon: ShoppingBag, label: "Đặc quyền hội viên", desc: "Ưu đãi lên đến 20%" }
-          ].map((feature, i) => (
-            <div key={i} className="flex flex-col items-center text-center gap-6 group hover:translate-y-[-5px] transition-transform duration-500">
-              <div className="w-16 h-16 rounded-2xl bg-secondary/50 flex items-center justify-center text-primary group-hover:bg-accent group-hover:text-white transition-all shadow-sm">
-                <feature.icon className="w-7 h-7" />
-              </div>
-              <div className="space-y-2">
-                <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/80">{feature.label}</h4>
-                <p className="text-[10px] font-medium text-muted-foreground italic leading-relaxed max-w-[150px] mx-auto opacity-70 uppercase">{feature.desc}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </motion.section>
+     
 
       <Footer />
       

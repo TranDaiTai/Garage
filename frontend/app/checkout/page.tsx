@@ -12,7 +12,7 @@ import Link from "next/link";
 import { formatCurrency } from "@/lib/utils";
 import toast from "react-hot-toast";
 import { orderService } from "@/services/orderService";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { addressService } from "@/services/addressService";
 import { shippingService } from "@/services/shippingService";
 import { promotionService } from "@/services/promotionService";
@@ -21,6 +21,7 @@ export default function CheckoutPage() {
   const { items, totalPrice, clearCart } = useCart();
   const { user } = useAuth();
   const router = useRouter();
+  const queryClient = useQueryClient();
   
   const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
   const [selectedShippingMethodId, setSelectedShippingMethodId] = useState<number | null>(null);
@@ -59,7 +60,7 @@ export default function CheckoutPage() {
 
   const shippingFee = useMemo(() => {
     const method = shippingMethods.find((m: any) => m.id === selectedShippingMethodId);
-    return method ? parseFloat(method.price) : 0;
+    return method ? parseFloat(method.baseFee) : 0;
   }, [selectedShippingMethodId, shippingMethods]);
 
   const finalTotal = Math.max(0, totalPrice + shippingFee - discount);
@@ -123,7 +124,7 @@ export default function CheckoutPage() {
       }
     ).then(() => {
       clearCart();
-      router.push("/profile");
+      router.push("/checkout/success");
     }).catch(console.error);
   };
 
@@ -156,15 +157,53 @@ export default function CheckoutPage() {
                         onClick={() => setSelectedAddressId(addr.id)}
                         className={`p-6 rounded-[2rem] border-2 cursor-pointer transition-all relative ${selectedAddressId === addr.id ? 'border-accent bg-accent/5' : 'border-gray-50 hover:border-accent/20'}`}
                       >
-                         <p className="text-[10px] font-black uppercase tracking-widest text-primary mb-2">{addr.street}</p>
-                         <p className="text-xs font-medium text-muted-foreground italic">{addr.city}, {addr.state}, {addr.country}</p>
+                         <p className="text-[10px] font-black uppercase tracking-widest text-primary mb-2">{addr.addressLine}</p>
+                         <p className="text-xs font-medium text-muted-foreground italic">{addr.city}, {addr.country}</p>
                          {selectedAddressId === addr.id && <CheckCircle2 className="absolute top-6 right-6 w-5 h-5 text-accent" />}
                       </div>
                     ))
                   ) : (
-                    <div className="col-span-2 p-10 bg-secondary/30 rounded-[2rem] border border-dashed border-gray-200 text-center">
-                       <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-4">Bạn chưa có địa chỉ nào</p>
-                       <Link href="/profile/addresses" className="btn-primary px-6 py-3 text-[10px]">Thêm địa chỉ mới</Link>
+                    <div className="col-span-2 p-10 bg-secondary/30 rounded-[2rem] border border-dashed border-gray-200">
+                       <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-6 text-center">Bạn chưa có địa chỉ giao hàng</p>
+                       <div className="space-y-4 max-w-md mx-auto">
+                          <input 
+                             type="text" 
+                             placeholder="ĐỊA CHỈ CHI TIẾT (SỐ NHÀ, ĐƯỜNG...)" 
+                             id="quick-address"
+                             className="w-full bg-white border-none rounded-xl py-4 px-6 text-[10px] font-black outline-none focus:ring-1 focus:ring-accent shadow-sm"
+                          />
+                          <input 
+                             type="text" 
+                             placeholder="THÀNH PHỐ" 
+                             id="quick-city"
+                             className="w-full bg-white border-none rounded-xl py-4 px-6 text-[10px] font-black outline-none focus:ring-1 focus:ring-accent shadow-sm"
+                          />
+                          <input 
+                             type="text" 
+                             placeholder="SỐ ĐIỆN THOẠI" 
+                             id="quick-phone"
+                             className="w-full bg-white border-none rounded-xl py-4 px-6 text-[10px] font-black outline-none focus:ring-1 focus:ring-accent shadow-sm"
+                          />
+                          <button 
+                            onClick={async () => {
+                              const addressLine = (document.getElementById('quick-address') as HTMLInputElement).value;
+                              const city = (document.getElementById('quick-city') as HTMLInputElement).value;
+                              const phone = (document.getElementById('quick-phone') as HTMLInputElement).value;
+                              if(!addressLine || !city || !phone) return toast.error("Vui lòng nhập đầy đủ thông tin");
+                              try {
+                                const newAddr = await addressService.createAddress({ addressLine, city, phone, country: "Việt Nam", isDefault: true });
+                                toast.success("Thêm địa chỉ thành công!");
+                                queryClient.invalidateQueries({ queryKey: ["addresses"] });
+                                setSelectedAddressId((newAddr as any).id);
+                              } catch (err) {
+                                toast.error("Có lỗi khi lưu địa chỉ");
+                              }
+                            }}
+                            className="w-full btn-primary py-4 text-[10px]"
+                          >
+                            LƯU & SỬ DỤNG ĐỊA CHỈ NÀY
+                          </button>
+                       </div>
                     </div>
                   )}
                </div>
@@ -186,9 +225,9 @@ export default function CheckoutPage() {
                     >
                       <div className="space-y-1">
                          <p className="text-[10px] font-black uppercase tracking-widest">{method.name}</p>
-                         <p className="text-xs font-medium italic text-muted-foreground">{method.estimatedTime}</p>
+                         <p className="text-xs font-medium italic text-muted-foreground">{method.estimatedDays}</p>
                       </div>
-                      <p className="font-black text-primary">{formatCurrency(method.price)}</p>
+                      <p className="font-black text-primary">{formatCurrency(method.baseFee)}</p>
                     </div>
                   ))}
                </div>

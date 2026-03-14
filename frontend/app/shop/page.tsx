@@ -28,7 +28,7 @@ export default function ShopPage() {
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
   const [isSortOpen, setIsSortOpen] = useState(false);
   const sortRef = useRef<HTMLDivElement>(null);
-  
+
   const limit = 12;
 
   const SORT_OPTIONS = [
@@ -87,7 +87,7 @@ export default function ShopPage() {
     if (maxPrice < 10000000) params.append("maxPrice", maxPrice.toString());
     if (sortBy) params.append("sort", sortBy);
     if (status === "on-sale") params.append("hasDiscount", "true");
-    
+
     return params.toString();
   }, [page, searchTerm, selectedCategory, minPrice, maxPrice, sortBy, status]);
 
@@ -97,7 +97,13 @@ export default function ShopPage() {
     staleTime: 5000,
   });
 
-  const products = Array.isArray(productsData) ? productsData : [];
+  const rawData: any = productsData;
+  const products: any[] = rawData?.products ?? (Array.isArray(rawData) ? rawData : []);
+  const pagination = rawData?.pagination || null;
+  const totalPages = pagination?.totalPages || 1;
+  const totalItems = pagination?.totalItems || products.length;
+  const hasNext = pagination ? pagination.hasNext : products.length >= limit;
+  const hasPrev = pagination ? pagination.hasPrev : page > 1;
 
   // --- Wrappers for state updates using useTransition ---
   const handleSetSearch = (val: string) => {
@@ -161,10 +167,10 @@ export default function ShopPage() {
 
       <div className="max-w-7xl mx-auto px-6 pt-40 pb-20">
         <div className="flex flex-col lg:flex-row gap-16">
-          
+
           {/* Side Filter - Desktop (Sticky) */}
           <aside className="hidden lg:block w-72 shrink-0 sticky top-32 h-fit max-h-[calc(100vh-160px)] overflow-y-auto pr-4 custom-scrollbar">
-            <FilterSidebar 
+            <FilterSidebar
               searchTerm={searchTerm}
               setSearchTerm={handleSetSearch}
               selectedCategory={selectedCategory}
@@ -184,12 +190,12 @@ export default function ShopPage() {
 
           {/* Main Content */}
           <div className="flex-1 space-y-12 min-h-[1200px]">
-            
-            {/* Header / Top Toolbar */}
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 animate-slideUp">
+
+            {/* Header / Top Toolbar — relative z-10 so dropdown floats above product grid */}
+            <div className="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-8 animate-slideUp">
               <div className="space-y-4">
                 <div className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-[#4F6F52] italic font-serif">
-                   <ShoppingBag className="w-4 h-4" /> EcoMarket Premium
+                  <ShoppingBag className="w-4 h-4" /> EcoMarket Premium
                 </div>
                 <h1 className="text-5xl md:text-6xl font-black text-primary tracking-tighter uppercase leading-[1.1]">
                   <span className="block">Bộ sưu tập</span>
@@ -201,12 +207,11 @@ export default function ShopPage() {
 
               <div className="flex items-center gap-3">
                 {/* Custom Sort Dropdown */}
-                <div ref={sortRef} className="relative">
+                <div ref={sortRef} className="relative z-[200]">
                   <button
                     onClick={() => setIsSortOpen(!isSortOpen)}
-                    className={`flex items-center gap-3 pl-5 pr-4 py-3.5 bg-white border rounded-2xl shadow-sm transition-all text-sm font-bold ${
-                      isSortOpen ? 'border-accent text-accent shadow-accent/10' : 'border-gray-200 text-primary hover:border-accent/40'
-                    }`}
+                    className={`flex items-center gap-3 pl-5 pr-4 py-3.5 bg-white border rounded-2xl shadow-sm transition-all text-sm font-bold ${isSortOpen ? 'border-accent text-accent shadow-accent/10' : 'border-gray-200 text-primary hover:border-accent/40'
+                      }`}
                   >
                     <span className="text-accent">&#9650;&#9660;</span>
                     <span className="hidden sm:inline">{currentSort.label}</span>
@@ -220,20 +225,19 @@ export default function ShopPage() {
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: -8, scale: 0.96 }}
                         transition={{ duration: 0.15 }}
-                        className="absolute right-0 top-full mt-2 w-52 bg-white border border-gray-100 rounded-2xl shadow-2xl shadow-primary/10 overflow-hidden z-50"
+                        className="absolute right-0 top-full mt-2 w-56 bg-white border border-gray-100 rounded-2xl shadow-2xl shadow-primary/10 z-[200] py-1"
                       >
                         {SORT_OPTIONS.map((option) => (
                           <button
                             key={option.value}
                             onClick={() => { handleSetSort(option.value); setIsSortOpen(false); }}
-                            className={`w-full flex items-center justify-between px-5 py-3.5 text-sm font-bold transition-colors ${
-                              sortBy === option.value
+                            className={`w-full flex items-center justify-between px-5 py-3.5 text-sm font-bold transition-colors first:rounded-t-2xl last:rounded-b-2xl ${sortBy === option.value
                                 ? 'bg-accent/5 text-accent'
                                 : 'text-primary hover:bg-gray-50'
-                            }`}
+                              }`}
                           >
                             <span>{option.label}</span>
-                            {sortBy === option.value && <Check className="w-4 h-4" />}
+                            {sortBy === option.value && <Check className="w-4 h-4 flex-shrink-0" />}
                           </button>
                         ))}
                       </motion.div>
@@ -278,11 +282,11 @@ export default function ShopPage() {
                     <div className="w-20 h-20 bg-red-50 text-red-500 rounded-full flex items-center justify-center">
                       <X className="w-10 h-10" />
                     </div>
-                    <h3 className="text-xl font-black uppercase text-primary">Lỗi kết nối máy chủ</h3>
+                    <h3 className="text-xl font-black uppercase text-primary">Không có dữ liệu </h3>
                     <button onClick={() => window.location.reload()} className="btn-primary px-8 py-4">Thử lại</button>
                   </div>
                 ) : products.length === 0 ? (
-                  <motion.div 
+                  <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="col-span-full premium-card p-24 flex flex-col items-center justify-center text-center space-y-8 bg-white border border-gray-100"
@@ -318,20 +322,21 @@ export default function ShopPage() {
               {!isLoading && products.length > 0 && (
                 <div className="mt-20 pt-10 border-t border-gray-100 flex items-center justify-between">
                   <p className="hidden md:block text-xs font-bold uppercase tracking-widest text-primary/60">
-                    Trang {page} / Tổng số {Math.ceil(products.length / limit) || 1}
+                    Trang {page} / {totalPages} &bull; {totalItems} sản phẩm
                   </p>
                   <div className="flex items-center gap-3">
-                    <button 
-                      disabled={page === 1}
+                    <button
+                      disabled={!hasPrev}
                       onClick={() => setPage(page - 1)}
                       className="w-12 h-12 flex items-center justify-center rounded-2xl border border-gray-100 bg-white hover:bg-secondary disabled:opacity-20 transition-all shadow-sm"
                     >
                       <ChevronLeft className="w-5 h-5" />
                     </button>
                     <span className="text-[10px] font-black uppercase bg-primary text-white w-12 h-12 flex items-center justify-center rounded-2xl shadow-xl shadow-primary/20">{page}</span>
-                    <button 
+                    <button
+                      disabled={!hasNext}
                       onClick={() => setPage(page + 1)}
-                      className="w-12 h-12 flex items-center justify-center rounded-2xl border border-gray-100 bg-white hover:bg-secondary transition-all shadow-sm"
+                      className="w-12 h-12 flex items-center justify-center rounded-2xl border border-gray-100 bg-white hover:bg-secondary disabled:opacity-20 transition-all shadow-sm"
                     >
                       <ChevronRight className="w-5 h-5" />
                     </button>
@@ -347,14 +352,14 @@ export default function ShopPage() {
       <AnimatePresence>
         {isMobileFilterOpen && (
           <>
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsMobileFilterOpen(false)}
               className="fixed inset-0 bg-primary/40 backdrop-blur-md z-[60]"
             />
-            <motion.div 
+            <motion.div
               initial={{ x: "100%" }}
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
@@ -367,7 +372,7 @@ export default function ShopPage() {
                   <X className="w-6 h-6" />
                 </button>
               </div>
-              <FilterSidebar 
+              <FilterSidebar
                 searchTerm={searchTerm}
                 setSearchTerm={setSearchTerm}
                 selectedCategory={selectedCategory}
@@ -384,7 +389,7 @@ export default function ShopPage() {
                 setPage={setPage}
               />
               <div className="mt-12">
-                <button 
+                <button
                   onClick={() => setIsMobileFilterOpen(false)}
                   className="w-full btn-primary py-6"
                 >

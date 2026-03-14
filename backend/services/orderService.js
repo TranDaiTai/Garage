@@ -29,34 +29,42 @@ exports.createOrder = async (userId, data) => {
        }
     }
 
-    // 3. Tạo Order
-    const order = await tx.order.create({
-      data: {
-        userId: parseInt(userId),
-        addressId: addressId ? parseInt(addressId) : null,
-        promotionId: promotionId ? parseInt(promotionId) : null,
-        shippingMethodId: shippingMethodId ? parseInt(shippingMethodId) : null,
-        shippingFee: parseFloat(shippingFee),
-        totalAmount: parseFloat(totalAmount),
-        status: "pending",
-        items: {
-          create: items.map(item => ({
-            productId: item.productId,
-            variantId: item.variantId || null,
-            quantity: item.quantity,
-            priceAtPurchase: item.price,
-            subtotal: item.subtotal
-          }))
-        },
-        statusHistory: {
-          create: [{
-             status: "pending",
-             note: "Đơn hàng đã được tạo mới"
-          }]
-        }
-      },
-      include: { items: true, statusHistory: true }
-    });
+     // 3. Tạo Order
+     const order = await tx.order.create({
+       data: {
+         userId: parseInt(userId),
+         addressId: addressId ? parseInt(addressId) : null,
+         promotionId: promotionId ? parseInt(promotionId) : null,
+         shippingMethodId: shippingMethodId ? parseInt(shippingMethodId) : null,
+         shippingFee: parseFloat(shippingFee),
+         totalAmount: parseFloat(totalAmount),
+         status: "pending",
+         items: {
+           create: items.map(item => ({
+             productId: item.productId,
+             variantId: item.variantId || null,
+             quantity: item.quantity,
+             priceAtPurchase: item.price,
+             subtotal: item.subtotal
+           }))
+         },
+         statusHistory: {
+           create: [{
+              status: "pending",
+              note: "Đơn hàng đã được tạo mới"
+           }]
+         }
+       },
+       include: { items: true, statusHistory: true }
+     });
+
+     // 3.1 Cập nhật số lượng đã bán (Social Proof)
+     for (const item of items) {
+       await tx.product.update({
+         where: { id: item.productId },
+         data: { soldCount: { increment: item.quantity || 1 } }
+       });
+     }
 
     // 4. Tạo record Payment (nếu có)
     if (paymentMethod) {

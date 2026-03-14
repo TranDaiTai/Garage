@@ -36,9 +36,9 @@ exports.getAllProducts = async (req, res) => {
 
     res.json({
       success: true,
-      message: "lay san pham thanh cong",
+      message: "Lấy sản phẩm thành công",
       data: {
-        product: result.products,
+        products: result.products,
         pagination: result.pagination,
       },
     });

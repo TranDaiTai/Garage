@@ -14,10 +14,12 @@ export default function AdminProductsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any>(null);
 
-  const { data: products = [], isLoading } = useQuery({
+  const rawData: any = useQuery({
     queryKey: ["adminProducts"],
     queryFn: () => productService.getAllProducts(),
   });
+  const adminProductsRaw: any[] = rawData.data?.products ?? (Array.isArray(rawData.data) ? rawData.data : []);
+  const isLoading = rawData.isLoading;
 
   const deleteProductMutation = useMutation({
     mutationFn: (id: number) => productService.deleteProduct(id),
@@ -27,8 +29,8 @@ export default function AdminProductsPage() {
     }
   });
 
-  const filteredProducts = products.filter((p: any) => 
-    p.name.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredProducts = adminProductsRaw.filter((p: any) =>
+    p.name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleEdit = (product: any) => {

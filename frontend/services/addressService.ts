@@ -7,10 +7,9 @@ export const addressService = {
   },
 
   createAddress: async (addressData: {
-    street: string;
+    addressLine: string;
     city: string;
-    state?: string;
-    postalCode?: string;
+    phone?: string;
     country?: string;
     isDefault?: boolean;
   }) => {

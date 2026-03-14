@@ -11,13 +11,22 @@ import toast from "react-hot-toast";
 import { useState } from "react";
 import { orderService } from "@/services/orderService";
 import { userService } from "@/services/userService";
+import { addressService } from "@/services/addressService";
 import { formatCurrency } from "@/lib/utils";
 
 export default function ProfilePage() {
   const { user, logout, isLoading } = useAuth();
   const router = useRouter();
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState<"profile" | "orders">("profile");
+  const [activeTab, setActiveTab] = useState<"profile" | "orders" | "addresses">("profile");
+  const [showAddressForm, setShowAddressForm] = useState(false);
+  const [addressFormData, setAddressFormData] = useState({
+    addressLine: "",
+    city: "",
+    phone: "",
+    country: "Việt Nam",
+    isDefault: false
+  });
 
   const [formData, setFormData] = useState({
     fullName: user?.full_name || user?.fullName || "",
@@ -30,15 +39,39 @@ export default function ProfilePage() {
     enabled: !!user,
   });
 
+  const { data: addresses = [], isLoading: addressesLoading } = useQuery({
+    queryKey: ["userAddresses"],
+    queryFn: () => addressService.getUserAddresses(),
+    enabled: !!user,
+  });
+
   const updateProfileMutation = useMutation({
     mutationFn: (data: typeof formData) => userService.updateUser(user.id, data),
     onSuccess: () => {
       toast.success("Cập nhật thông tin thành công!");
-      queryClient.invalidateQueries({ queryKey: ["user"] }); // If using a user query
-      // Ideally update the user context here, but reloading window works as a quick sync
+      queryClient.invalidateQueries({ queryKey: ["user"] });
       window.location.reload();
     },
     onError: () => toast.error("Có lỗi xảy ra khi cập nhật."),
+  });
+
+  const addAddressMutation = useMutation({
+    mutationFn: (data: typeof addressFormData) => addressService.createAddress(data),
+    onSuccess: () => {
+      toast.success("Thêm địa chỉ thành công!");
+      queryClient.invalidateQueries({ queryKey: ["userAddresses"] });
+      setShowAddressForm(false);
+      setAddressFormData({ addressLine: "", city: "", phone: "", country: "Việt Nam", isDefault: false });
+    },
+    onError: () => toast.error("Không thể thêm địa chỉ."),
+  });
+
+  const deleteAddressMutation = useMutation({
+    mutationFn: (id: number) => addressService.deleteAddress(id),
+    onSuccess: () => {
+      toast.success("Đã xóa địa chỉ.");
+      queryClient.invalidateQueries({ queryKey: ["userAddresses"] });
+    },
   });
 
   if (isLoading) return <div className="min-h-screen bg-white" />;
@@ -72,20 +105,33 @@ export default function ProfilePage() {
            >
               <div className="premium-card p-10 bg-white text-center space-y-6">
                  <div className="w-24 h-24 rounded-full bg-secondary mx-auto overflow-hidden border-4 border-white shadow-xl flex items-center justify-center">
-                    {user.avatar ? <img src={user.avatar} alt="Avatar" className="w-full h-full object-cover" /> : <User className="w-12 h-12 text-primary/20" />}
+                     {user.avatarUrl || user.avatar 
+                       ? <img src={user.avatarUrl || user.avatar} alt="Avatar" className="w-full h-full object-cover" /> 
+                       : <User className="w-12 h-12 text-primary/20" />}
                  </div>
-                 <div>
-                    <h3 className="text-xl font-black uppercase text-primary tracking-tight">{user.full_name || user.fullName || user.username}</h3>
-                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-accent/10 rounded-full text-[8px] font-black uppercase tracking-widest text-accent mt-2">
-                       <ShieldCheck className="w-3 h-3" /> {user.role === "admin" ? "Sáng lập / Admin" : "Hội viên Eco"}
-                    </div>
-                 </div>
+                  <div>
+                     <h3 className="text-xl font-black uppercase text-primary tracking-tight">{user.fullName || user.full_name || user.username}</h3>
+                     <div className="inline-flex items-center gap-2 px-3 py-1 bg-accent/10 rounded-full text-[8px] font-black uppercase tracking-widest text-accent mt-2">
+                        <ShieldCheck className="w-3 h-3" /> {user.role?.name === "admin" || user.role === "admin" ? "Sáng lập / Admin" : "Hội viên Eco"}
+                     </div>
+                     {user.points > 0 && (
+                       <div className="mt-3 flex items-center justify-center gap-2">
+                         <span className="text-2xl font-black text-accent">{user.points?.toLocaleString()}</span>
+                         <span className="text-[9px] font-black uppercase tracking-widest text-primary/40">Eco Points</span>
+                       </div>
+                     )}
+                  </div>
                  
                  <div className="pt-8 border-t border-gray-100 flex flex-col gap-4">
                     <button 
                       onClick={() => setActiveTab("profile")}
                       className={`flex items-center gap-4 text-[10px] font-black uppercase tracking-widest p-4 rounded-2xl transition-all ${activeTab === "profile" ? "bg-accent/10 text-accent" : "text-primary/40 hover:text-primary"}`}>
                        <User className="w-4 h-4" /> Hồ sơ cá nhân
+                    </button>
+                    <button 
+                      onClick={() => setActiveTab("addresses")}
+                      className={`flex items-center gap-4 text-[10px] font-black uppercase tracking-widest p-4 rounded-2xl transition-all ${activeTab === "addresses" ? "bg-accent/10 text-accent" : "text-primary/40 hover:text-primary"}`}>
+                       <MapPin className="w-4 h-4" /> Sổ địa chỉ
                     </button>
                     <button 
                       onClick={() => setActiveTab("orders")}
@@ -169,6 +215,94 @@ export default function ProfilePage() {
                 </div>
               )}
 
+              {activeTab === "addresses" && (
+                <div className="premium-card p-12 bg-white space-y-12 animate-slideUp">
+                   <div className="flex items-center justify-between">
+                      <h2 className="text-3xl font-black uppercase text-primary tracking-tighter italic">Sổ địa chỉ</h2>
+                      <button 
+                        onClick={() => setShowAddressForm(!showAddressForm)}
+                        className="btn-primary px-6 py-3 text-[10px]"
+                      >
+                        {showAddressForm ? "HỦY BỎ" : "THÊM ĐỊA CHỈ"}
+                      </button>
+                   </div>
+
+                   {showAddressForm && (
+                      <div className="p-8 bg-gray-50 rounded-[2rem] border border-gray-100 space-y-6 animate-slideDown">
+                         <div className="grid md:grid-cols-2 gap-6">
+                            <div className="space-y-2">
+                               <label className="text-[10px] font-black uppercase tracking-widest text-primary/40 ml-2">Địa chỉ chi tiết</label>
+                               <input 
+                                 type="text"
+                                 value={addressFormData.addressLine}
+                                 onChange={e => setAddressFormData({...addressFormData, addressLine: e.target.value})}
+                                 className="w-full bg-white border-2 border-transparent rounded-2xl py-4 px-6 font-bold text-primary outline-none focus:border-accent shadow-sm"
+                                 placeholder="Số nhà, tên đường..."
+                               />
+                            </div>
+                            <div className="space-y-2">
+                               <label className="text-[10px] font-black uppercase tracking-widest text-primary/40 ml-2">Thành phố</label>
+                               <input 
+                                 type="text"
+                                 value={addressFormData.city}
+                                 onChange={e => setAddressFormData({...addressFormData, city: e.target.value})}
+                                 className="w-full bg-white border-2 border-transparent rounded-2xl py-4 px-6 font-bold text-primary outline-none focus:border-accent shadow-sm"
+                                 placeholder="Ví dụ: TP. Hồ Chí Minh"
+                               />
+                            </div>
+                            <div className="space-y-2">
+                               <label className="text-[10px] font-black uppercase tracking-widest text-primary/40 ml-2">Số điện thoại nhận hàng</label>
+                               <input 
+                                 type="text"
+                                 value={addressFormData.phone}
+                                 onChange={e => setAddressFormData({...addressFormData, phone: e.target.value})}
+                                 className="w-full bg-white border-2 border-transparent rounded-2xl py-4 px-6 font-bold text-primary outline-none focus:border-accent shadow-sm"
+                                 placeholder="Nhập số điện thoại..."
+                               />
+                            </div>
+                         </div>
+                         <div className="flex justify-end">
+                            <button 
+                              onClick={() => addAddressMutation.mutate(addressFormData)}
+                              disabled={addAddressMutation.isPending}
+                              className="bg-accent text-white px-10 py-4 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-lg shadow-accent/20"
+                            >
+                               {addAddressMutation.isPending ? "ĐANG LƯU..." : "LƯU ĐỊA CHỈ"}
+                            </button>
+                         </div>
+                      </div>
+                   )}
+
+                   <div className="grid md:grid-cols-2 gap-6">
+                      {addressesLoading ? (
+                        [1,2].map(i => <div key={i} className="h-40 bg-secondary/20 rounded-[2rem] animate-pulse" />)
+                      ) : addresses.length > 0 ? (
+                        addresses.map((addr: any) => (
+                          <div key={addr.id} className="p-8 border-2 border-gray-50 rounded-[2rem] hover:border-accent/20 transition-all relative group">
+                             <div className="flex items-center gap-3 mb-4">
+                                <div className="w-8 h-8 rounded-full bg-accent/10 text-accent flex items-center justify-center"><MapPin className="w-4 h-4" /></div>
+                                <span className="text-[10px] font-black uppercase tracking-widest text-primary">{addr.addressLine}</span>
+                             </div>
+                              <p className="text-sm font-medium text-primary/60 italic mb-2">{addr.city}, {addr.country}</p>
+                             {addr.phone && <p className="text-[10px] font-black text-primary/30 uppercase tracking-widest mb-6">SĐT: {addr.phone}</p>}
+                             <button 
+                               onClick={() => deleteAddressMutation.mutate(addr.id)}
+                               className="text-[10px] font-black text-red-400 hover:text-red-500 uppercase tracking-widest"
+                             >
+                               Xóa địa chỉ
+                             </button>
+                             {addr.isDefault && <span className="absolute top-8 right-8 text-[8px] font-black bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full uppercase">Mặc định</span>}
+                          </div>
+                        ))
+                      ) : (
+                        <div className="col-span-2 py-16 text-center text-primary/30 uppercase font-black text-xs tracking-widest border-2 border-dashed border-gray-100 rounded-[2rem]">
+                           Bạn chưa lưu địa chỉ nào
+                        </div>
+                      )}
+                   </div>
+                </div>
+              )}
+
               {activeTab === "orders" && (
                 <div className="premium-card p-12 bg-white space-y-8 animate-slideUp">
                   <h2 className="text-3xl font-black uppercase text-primary tracking-tighter italic">Đơn hàng của tôi</h2>
@@ -198,7 +332,7 @@ export default function ProfilePage() {
                               </div>
                            </div>
                            <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
-                              <p className="text-sm font-medium text-muted-foreground">{new Date(order.createdAt).toLocaleDateString('vi-VN')} • {order.items?.length || 0} sản phẩm</p>
+                               <p className="text-sm font-medium text-muted-foreground">{new Date(order.orderDate || order.createdAt).toLocaleDateString('vi-VN')} &bull; {order.items?.length || 0} sản phẩm</p>
                               <p className="text-2xl font-black text-primary tracking-tighter">{formatCurrency(order.totalAmount)}</p>
                            </div>
                         </div>
