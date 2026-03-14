@@ -1,0 +1,34 @@
+import type { Metadata } from "next";
+import { Inter, Outfit } from "next/font/google";
+import "./globals.css";
+import Providers from "@/components/common/Providers";
+import { AuthProvider } from "@/context/AuthContext";
+import { CartProvider } from "@/context/CartContext";
+
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
+const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit" });
+
+export const metadata: Metadata = {
+  title: "EcoMarket | Premium Sustainable Shopping",
+  description: "Experience the future of sustainable e-commerce with EcoMarket.",
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="en">
+      <body className={`${inter.variable} ${outfit.variable} font-sans antialiased bg-background text-foreground`}>
+        <Providers>
+          <AuthProvider>
+            <CartProvider>
+              {children}
+            </CartProvider>
+          </AuthProvider>
+        </Providers>
+      </body>
+    </html>
+  );
+}

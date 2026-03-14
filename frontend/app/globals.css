@@ -1,0 +1,106 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: hsl(0 0% 100%);
+  --color-foreground: hsl(222 47% 11%);
+  
+  --color-primary: hsl(222 47% 11%);
+  --color-primary-foreground: hsl(210 40% 98%);
+  
+  --color-accent: #4F6F52;
+  --color-accent-foreground: hsl(210 40% 98%);
+  
+  --color-secondary: hsl(210 40% 96.1%);
+  --color-secondary-foreground: hsl(222 47% 11.2%);
+  
+  --color-muted: hsl(210 40% 96.1%);
+  --color-muted-foreground: hsl(215.4 16.3% 46.9%);
+  
+  --radius-custom: 1rem;
+}
+
+@layer base {
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    /* Accessibility: ensure no text is below 12px */
+    font-size: max(16px, 1rem);
+  }
+}
+
+@layer components {
+  .premium-card {
+    @apply bg-white/70 backdrop-blur-md border border-white/40 shadow-xl rounded-[2.5rem] transition-all duration-500 hover:shadow-2xl hover:scale-[1.01];
+  }
+  
+  .glass-effect {
+    @apply bg-white/40 backdrop-blur-xl border border-white/40 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)];
+  }
+  
+  .btn-primary {
+    @apply bg-accent text-white rounded-2xl transition-all duration-300 hover:bg-accent/90 hover:scale-105 active:scale-95 shadow-lg font-bold tracking-tight;
+  }
+
+  /* Reusable label style - always 12px minimum */
+  .text-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+}
+
+/* =============================================
+ * ACCESSIBILITY — WCAG AA Contrast Compliance
+ * =============================================
+ * Min contrast ratio: 4.5:1 (normal text), 3:1 (large text / UI components)
+ *
+ * Safe opacity combos:
+ *  On white bg (#FFF):  text-primary needs /70 or higher  (hsl(222 47% 11%) @ 70% ≈ 6.1:1 ✅)
+ *  On dark bg (#0F172A): text-white needs /60 or higher   (white @ 60% ≈ 4.7:1 ✅)
+ *
+ * BLOCKED sizes — lifted to minimum 12px for readability:
+ */
+.text-\[10px\] { font-size: 0.75rem !important; }
+.text-\[8px\]  { font-size: 0.75rem !important; }
+.text-\[9px\]  { font-size: 0.75rem !important; }
+
+/*
+ * CONTRAST ENFORCEMENT
+ * The following rules override Tailwind's opacity-based text colors
+ * to ensure all readable text meets at least WCAG AA (4.5:1).
+ *
+ * NOTE: /20 and /30 are intentionally allowed for decorative icons
+ * and ornamental elements (not content text), but we lift all TEXT
+ * (selectors that commonly appear on interactive/content elements).
+ *
+ * Primary color: hsl(222 47% 11%) = #0f1729 (very dark navy)
+ *   /40 on white  ≈ 3.2:1 (FAILS for normal text) → lift to /70 ≈ 6.1:1 ✅
+ *   /30 on white  ≈ 2.2:1 (FAILS)                 → lift to /60 ≈ 4.8:1 ✅
+ *   /20 on white  ≈ 1.7:1 (FAILS)                 → lift to /60 ≈ 4.8:1 ✅
+ */
+:is(p, span, a, label, h1, h2, h3, h4, h5, h6, button, th, td, li).text-primary\/20,
+:is(p, span, a, label, h1, h2, h3, h4, h5, h6, button, th, td, li).text-primary\/30,
+:is(p, span, a, label, h1, h2, h3, h4, h5, h6, button, th, td, li).text-primary\/40 {
+  color: hsl(222 47% 11% / 0.65) !important;
+}
+
+/* On dark backgrounds: lift text-white/20, /30, /40 */
+:is(p, span, a, label, h1, h2, h3, h4, h5, h6, button, th, td, li).text-white\/20,
+:is(p, span, a, label, h1, h2, h3, h4, h5, h6, button, th, td, li).text-white\/30,
+:is(p, span, a, label, h1, h2, h3, h4, h5, h6, button, th, td, li).text-white\/40 {
+  color: rgb(255 255 255 / 0.7) !important;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-slideUp {
+  animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.shadow-premium {
+  box-shadow: 0 10px 40px -10px rgba(0,0,0,0.1);
+}

@@ -29,11 +29,10 @@ const PORT = 5000;
 // origin: 'http://localhost:5173' là frontend URL
 // credentials: true là cho phép gửi cookie
 
-app.use(cors(
-  {origin: 'http://localhost:5173', // frontend URL
-  credentials: true, // cho phép gửi cookie
-}
-));
+app.use(cors({
+  origin: ['http://localhost:3000', 'http://localhost:5173'],
+  credentials: true,
+}));
 app.use(express.urlencoded({ extended: true }));
 /*
 Khi người dùng điền thông tin vào form (ví dụ: form Đăng nhập, form Thêm xe trong dự án Garga-Pro) và
